@@ -19,13 +19,17 @@ import * as path from "path";
 import * as anchor from "@anchor-lang/core";
 // ponytail: require bs58 at top level — dynamic require inside a function gets
 // wrapped by esModuleInterop and loses the named exports.
+// Upgrade path: switch to `import bs58 from "bs58"` once the project moves to
+// ESM (needs "type":"module" in package.json + tsconfig moduleResolution:bundler).
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bs58 = require("bs58") as { decode: (s: string) => Uint8Array };
 import { predictFromMatchState } from "./model";
 import { detectTrigger } from "./trigger";
 import { logTrace } from "./logger";
-import { StubAssessor } from "./assessor";
+import { StubAssessor, RealAssessor } from "./assessor";
 import type { MatchState } from "./types";
+import { TxLineClient } from "../client/txline-client";
+import { normalizeMatchState } from "../client/normalize";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -81,6 +85,24 @@ export const NO_TRADE_HALT_CYCLES = 5;
 export const BALANCE_FLOOR_LAMPORTS = 10_000_000;
 
 // ---------------------------------------------------------------------------
+// Live mode constants (USE_LIVE=1)
+// ---------------------------------------------------------------------------
+
+/** Hard stop after this many live cycles. Prevents unbounded Opus + devnet spend.
+ *  First successful open_position also stops the loop (whichever comes first). */
+export const MAX_LIVE_CYCLES = 6;
+
+/** Live fixture detection window: StartTime in past + within this many ms. */
+const LIVE_WINDOW_MS = 150 * 60 * 1000; // 150 min
+
+/** Path to fresh subscribe txSig written by subscribe-fresh.ts */
+const SUBSCRIBE_JSON_PATH = path.join(
+  os.homedir(),
+  ".arcana",
+  "c12-subscribe.json"
+);
+
+// ---------------------------------------------------------------------------
 // Operational helpers — C11
 // ---------------------------------------------------------------------------
 
@@ -89,6 +111,8 @@ export const BALANCE_FLOOR_LAMPORTS = 10_000_000;
  * logs a structured alert line. Never rejects.
  *
  * ponytail: Promise.race + setTimeout is stdlib — no external dep needed.
+ * Upgrade path: replace with AbortSignal.timeout() once Node 18+ is the
+ * minimum target (cleaner cancellation, no timer leak risk).
  */
 export function withTimeout<T>(
   promise: Promise<T>,
@@ -258,6 +282,413 @@ function kellyStake(
 }
 
 // ---------------------------------------------------------------------------
+// Live mode: credential loading (path-only, never logged)
+// ---------------------------------------------------------------------------
+
+/**
+ * Read the wallet private key (base58) from the secrets .md file at call time.
+ * The raw value is returned only to the immediate caller (liveAuth); never stored
+ * in a persistent variable or logged.
+ */
+function readPrivKeyB58(): string {
+  const md = fs.readFileSync(WALLET_MD_PATH, "utf8");
+  const m = md.match(/private key\s*=\s*([A-Za-z1-9][A-Za-z0-9]{43,})/);
+  if (!m) throw new Error("Could not parse private key from wallet .md file");
+  return m[1];
+}
+
+/**
+ * Read the fresh subscribe txSig from ~/.arcana/c12-subscribe.json.
+ */
+function readSubscribeTxSig(): string {
+  const raw = fs.readFileSync(SUBSCRIBE_JSON_PATH, "utf8");
+  const parsed = JSON.parse(raw) as { txSig: string };
+  if (!parsed.txSig) throw new Error("c12-subscribe.json missing txSig field");
+  return parsed.txSig;
+}
+
+// Internal type for the raw TxLINE fixture list entry (live schema)
+interface LiveFixtureEntry {
+  FixtureId: number;
+  Participant1: string;
+  Participant2: string;
+  StartTime: number; // unix ms
+  Competition: string;
+}
+
+/**
+ * Pick the live in-progress World Cup fixture: StartTime in the past, within
+ * LIVE_WINDOW_MS. Prefers most-recently-started. Falls back to most recent
+ * past fixture when no live match is found (for testing outside match windows).
+ */
+function pickLiveFixture(
+  fixtures: LiveFixtureEntry[],
+  nowMs: number
+): { fixture: LiveFixtureEntry; isActuallyLive: boolean } {
+  const live = fixtures.filter(
+    (f) => f.StartTime <= nowMs && nowMs - f.StartTime < LIVE_WINDOW_MS
+  );
+  if (live.length > 0) {
+    const fixture = live.reduce((a, b) => (a.StartTime > b.StartTime ? a : b));
+    return { fixture, isActuallyLive: true };
+  }
+  // No live match — use most recently started (graceful fallback)
+  const past = fixtures.filter((f) => f.StartTime <= nowMs);
+  if (past.length === 0)
+    throw new Error("No past fixtures found in TxLINE snapshot");
+  const fixture = past.reduce((a, b) => (a.StartTime > b.StartTime ? a : b));
+  return { fixture, isActuallyLive: false };
+}
+
+// ---------------------------------------------------------------------------
+// Live mode: main loop
+// ---------------------------------------------------------------------------
+
+/**
+ * runLiveLoop — bounded live trading loop.
+ *
+ * Safety contract:
+ *   - Stops after first successful open_position OR MAX_LIVE_CYCLES, whichever first.
+ *   - Opus (RealAssessor) called ONLY on material events (goal / red card).
+ *   - All C11 watchdog/timeout/anomaly floor checks remain active.
+ *   - Never logs the private key or API key value.
+ *   - Appends cycle + Opus trace to agent/traces.jsonl (and stdout).
+ */
+async function runLiveLoop(
+  program: anchor.Program,
+  keypair: anchor.web3.Keypair,
+  connection: anchor.web3.Connection
+): Promise<void> {
+  console.log("\n=== LIVE MODE (USE_LIVE=1) ===");
+  console.log(`MAX_LIVE_CYCLES=${MAX_LIVE_CYCLES}, stop-on-first-bet=true`);
+  console.log("Authenticating against TxLINE...");
+
+  // Auth once at startup — apiToken is reused for all polls (not single-use)
+  const liveClient = new TxLineClient({ useFixture: false });
+  const txSig = readSubscribeTxSig();
+  const privKeyB58 = readPrivKeyB58(); // read at call time, held only in this scope
+  await liveClient.liveAuth(txSig, privKeyB58);
+  // privKeyB58 goes out of scope after liveAuth returns; GC eligible immediately
+  console.log("Auth complete (jwt + apiToken cached in client).");
+
+  // Discover live fixture
+  console.log("Fetching fixtures snapshot...");
+  const rawFixtures =
+    (await liveClient.rawFixturesSnapshot()) as LiveFixtureEntry[];
+  const nowMs = Date.now();
+  const { fixture, isActuallyLive } = pickLiveFixture(rawFixtures, nowMs);
+  const fixtureId = fixture.FixtureId;
+  console.log(
+    `Target fixture: ${fixture.Participant1} vs ${fixture.Participant2}` +
+      ` (FixtureId=${fixtureId}, live=${isActuallyLive})`
+  );
+  if (!isActuallyLive) {
+    console.warn(
+      "WARNING: No in-progress match found. Using most recent past fixture for structure test."
+    );
+  }
+
+  // Ensure market PDA exists for this fixture's match ID
+  const liveMatchId = new anchor.BN(fixtureId);
+  const pdaExists = await marketPdaExists(program, liveMatchId);
+  if (!pdaExists) {
+    console.log(`Initialising market PDA for FixtureId=${fixtureId}...`);
+    const initTx = await initMarket(program, keypair, liveMatchId);
+    console.log(`init_market tx: ${initTx}`);
+  } else {
+    console.log("Market PDA already exists.");
+  }
+
+  const assessor = new RealAssessor(); // Opus 4.8 — key read at call time
+
+  let prevState: MatchState | null = null;
+  let positionOpened = false;
+  let positionStakeLamports = 0;
+  let consecutiveNoTrades = 0;
+  let anomalyHalt = false;
+
+  for (
+    let cycle = 0;
+    cycle < MAX_LIVE_CYCLES && !anomalyHalt && !positionOpened;
+    cycle++
+  ) {
+    console.log(`\n--- Live cycle ${cycle + 1}/${MAX_LIVE_CYCLES} ---`);
+
+    // lastState is written by the IIFE so prevState can be updated after.
+    // ponytail: mutable ref beats returning a tuple; only one caller.
+    let lastState: MatchState | null = null;
+
+    const cycleResult = await withTimeout<CycleLog | null>(
+      (async (): Promise<CycleLog | null> => {
+        // Fetch live scores + odds for target fixture
+        const [rawScores, rawOdds] = await Promise.all([
+          liveClient.scoresSnapshot(fixtureId),
+          liveClient.oddsSnapshot(fixtureId),
+        ]);
+
+        // rawScores from live endpoint is an array; find the matching entry
+        // ponytail: single-pass search; if array is short (1-2 entries) this is fine
+        let scoresEntry: unknown = rawScores;
+        if (Array.isArray(rawScores)) {
+          // Find by FixtureId, fallback to first entry
+          const found = (rawScores as Array<{ FixtureId?: number }>).find(
+            (e) => e.FixtureId === fixtureId
+          );
+          scoresEntry = found ?? rawScores[0] ?? {};
+        }
+
+        const state = normalizeMatchState(
+          fixtureId,
+          scoresEntry as import("../client/types").ScoresSnapshot,
+          rawOdds
+        );
+        lastState = state; // expose to outer scope for prevState tracking
+
+        console.log(
+          `  scores: ${state.homeScore ?? "?"}–${state.awayScore ?? "?"} ` +
+            `minute=${state.currentMinute ?? "?"}' ` +
+            `isLive=${state.isLive} ` +
+            `prices=[${state.prices.join(", ")}]`
+        );
+
+        if (!state.isLive) {
+          console.log("  Not live (InRunning=false) — skip.");
+          return {
+            cycle,
+            fixtureId,
+            modelP: 0,
+            marketP: 0,
+            edge: 0,
+            decision: "skip-not-live",
+          };
+        }
+
+        const modelP = predictFromMatchState(
+          state.scoreDifferential ?? 0,
+          state.matchPhase ?? 1,
+          state.redCardDelta ?? 0
+        );
+        const mktP = marketProb(state.prices);
+        const edge = modelP - mktP;
+
+        console.log(
+          `  model_P=${modelP.toFixed(4)} market_P=${mktP.toFixed(4)} ` +
+            `edge=${edge.toFixed(4)} threshold=${EDGE_THRESHOLD}`
+        );
+
+        // Material event check → Opus assessment (event-gated, sparse)
+        if (prevState) {
+          const trigger = detectTrigger(prevState, state);
+          if (trigger) {
+            console.log(`  MATERIAL EVENT: ${trigger.type} — calling Opus...`);
+            const position: import("./types").PositionContext = {
+              side: positionOpened ? ("home" as const) : ("none" as const),
+              stake: positionOpened ? positionStakeLamports : 0,
+              entryOdds: positionOpened ? state.prices[0] : null,
+            };
+
+            const HOLD_FALLBACK = {
+              assessment: "LLM call timed out — defaulting to hold.",
+              suggestedAction: "hold" as const,
+              reasoningTrace: "Timeout; no action taken.",
+            };
+            const assessment = await withTimeout(
+              assessor.assess(trigger, modelP, position),
+              LLM_TIMEOUT_MS,
+              HOLD_FALLBACK,
+              `live-assessor cycle=${cycle}`
+            );
+
+            // Log Opus trace to traces.jsonl (and stdout via logTrace)
+            logTrace(trigger, modelP, position, assessment, "real");
+            console.log(`  Opus assessment: ${assessment.assessment}`);
+            console.log(`  Suggested action: ${assessment.suggestedAction}`);
+            console.log(`  Reasoning trace: ${assessment.reasoningTrace}`);
+
+            if (
+              positionOpened &&
+              (assessment.suggestedAction === "exit" ||
+                assessment.suggestedAction === "decrease")
+            ) {
+              return {
+                cycle,
+                fixtureId,
+                modelP,
+                marketP: mktP,
+                edge,
+                decision: "skip-assessor",
+                assessorAction: assessment.suggestedAction,
+              };
+            }
+          }
+        }
+
+        // Edge filter + Kelly sizing + open_position
+        if (edge > EDGE_THRESHOLD && !positionOpened) {
+          const homeOdds = state.prices[0];
+          const { stake: stakeLamports, fStar } = kellyStake(modelP, homeOdds);
+
+          if (stakeLamports <= 0) {
+            console.log("  Kelly stake = 0 (negative EV) — skip.");
+            return {
+              cycle,
+              fixtureId,
+              modelP,
+              marketP: mktP,
+              edge,
+              decision: "skip-no-edge",
+            };
+          }
+
+          console.log(
+            `  EDGE > threshold! stake=${stakeLamports} lamports ` +
+              `(${(stakeLamports / 1e9).toFixed(6)} SOL) ` +
+              `f*=${fStar.toFixed(4)}`
+          );
+          console.log(
+            `  Calling open_position(stake=${stakeLamports}, side=home) on devnet...`
+          );
+
+          try {
+            const txSigBet = await openPosition(
+              program,
+              keypair,
+              liveMatchId,
+              new anchor.BN(stakeLamports),
+              "home"
+            );
+            positionOpened = true;
+            positionStakeLamports = stakeLamports;
+            console.log(`  OPEN_POSITION TX: ${txSigBet}`);
+            // Log the bet cycle to traces.jsonl so Garry has the tx
+            logTrace(
+              {
+                type: "goal", // synthetic trigger type for bet-cycle trace
+                fixtureId,
+                fromState: prevState ?? state,
+                toState: state,
+              },
+              modelP,
+              { side: "home", stake: stakeLamports, entryOdds: homeOdds },
+              {
+                assessment: `Bet placed. stake=${stakeLamports} lamports, tx=${txSigBet}`,
+                suggestedAction: "hold",
+                reasoningTrace: `Edge=${edge.toFixed(4)}, f*=${fStar.toFixed(
+                  4
+                )}, model_P=${modelP.toFixed(4)}`,
+              },
+              "real"
+            );
+            return {
+              cycle,
+              fixtureId,
+              modelP,
+              marketP: mktP,
+              edge,
+              decision: "bet",
+              stakeLamports,
+              txSig: txSigBet,
+            };
+          } catch (err) {
+            console.error(
+              `  open_position FAILED: ${
+                err instanceof Error ? err.message : err
+              }`
+            );
+            return {
+              cycle,
+              fixtureId,
+              modelP,
+              marketP: mktP,
+              edge,
+              decision: "bet-failed",
+              stakeLamports,
+            };
+          }
+        } else if (positionOpened) {
+          console.log("  Position already open — monitoring.");
+          return {
+            cycle,
+            fixtureId,
+            modelP,
+            marketP: mktP,
+            edge,
+            decision: "skip-position-open",
+          };
+        } else {
+          console.log(`  No bet: edge ${edge.toFixed(4)} ≤ threshold`);
+          return {
+            cycle,
+            fixtureId,
+            modelP,
+            marketP: mktP,
+            edge,
+            decision: "skip-no-edge",
+          };
+        }
+      })(),
+      CYCLE_WATCHDOG_MS,
+      null,
+      `live-cycle-watchdog cycle=${cycle}`
+    );
+
+    if (cycleResult === null) {
+      console.error(`  Watchdog fired on cycle ${cycle} — continuing.`);
+      if (isActuallyLive) consecutiveNoTrades++;
+    } else {
+      // Advance prevState so detectTrigger can compare consecutive snapshots.
+      // Only update when we successfully fetched a state (lastState set by IIFE).
+      if (lastState !== null) prevState = lastState;
+      if (cycleResult.decision === "bet") {
+        consecutiveNoTrades = 0;
+      } else if (isActuallyLive) {
+        consecutiveNoTrades++;
+      }
+    }
+
+    // Balance floor check (C11)
+    let walletBalanceLamports = 0;
+    try {
+      walletBalanceLamports = await connection.getBalance(keypair.publicKey);
+    } catch {
+      console.error(
+        JSON.stringify({
+          alert: "BALANCE_READ_ERROR",
+          cycle,
+          ts: new Date().toISOString(),
+        })
+      );
+    }
+
+    const anomaly = checkAnomalies(consecutiveNoTrades, walletBalanceLamports);
+    if (anomaly) {
+      console.error(
+        JSON.stringify({
+          alert: "ANOMALY_HALT",
+          reason: anomaly,
+          cycle,
+          ts: new Date().toISOString(),
+        })
+      );
+      anomalyHalt = true;
+    }
+
+    // Brief poll interval between live cycles (avoid hammering the API)
+    if (!positionOpened && !anomalyHalt && cycle + 1 < MAX_LIVE_CYCLES) {
+      await new Promise((r) => setTimeout(r, 5_000)); // 5s between polls
+    }
+  }
+
+  const stopReason = positionOpened
+    ? "first bet placed"
+    : anomalyHalt
+    ? "anomaly halt"
+    : `MAX_LIVE_CYCLES (${MAX_LIVE_CYCLES}) reached`;
+  console.log(`\n=== LIVE LOOP COMPLETE — stopped: ${stopReason} ===`);
+  console.log(`Traces written to agent/traces.jsonl`);
+}
+
+// ---------------------------------------------------------------------------
 // Synthetic state sequence for 3+ unattended cycles
 //
 // The base fixture has Argentina 2-1 France, 73', home red=0, away red=1.
@@ -401,8 +832,22 @@ async function main(): Promise<void> {
   console.log(`Wallet pubkey: ${keypair.publicKey.toBase58()}`);
 
   const program = buildProgram(keypair);
+
+  // ---------------------------------------------------------------------------
+  // LIVE MODE — gated behind USE_LIVE=1
+  // Spends real Opus credits + devnet SOL. Garry main-thread executes under
+  // Gabe's GABE_GATE approval. DO NOT run without explicit authorisation.
+  // ---------------------------------------------------------------------------
+  if (process.env["USE_LIVE"] === "1") {
+    const connection = program.provider.connection;
+    await runLiveLoop(program, keypair, connection);
+    return;
+  }
+
+  // ---------------------------------------------------------------------------
+  // STUB MODE (default) — synthetic state sequence, no network, no Opus calls
+  // ---------------------------------------------------------------------------
   const assessor = new StubAssessor();
-  // ponytail: stub for dev; swap to new RealAssessor() for ≤2 real Opus calls
 
   // --- SETUP: init_market (skip if PDA already exists) ---
   console.log(`\nChecking market PDA for match_id=${MATCH_ID.toString()}...`);
