@@ -1,0 +1,15 @@
+{
+  "target": "P(home wins match)",
+  "brier_score": 0.15818966933558984,
+  "brier_baseline": 0.24305555555555555,
+  "base_rate": 0.4166666666666667,
+  "train_rows": 4320,
+  "test_rows": 1080,
+  "matches": 60,
+  "dataset": "StatsBomb Open Data (World Cup + Euro)",
+  "directional_sanity": {
+    "leading_late_phase6_diff+2": 0.9106275750426039,
+    "trailing_late_phase6_diff-2": 0.008674768462671007,
+    "directional_ok": true
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "feature_order": [
+    "score_differential",
+    "match_phase",
+    "red_card_delta",
+    "match_phase_sq"
+  ],
+  "target": "P(home wins match)",
+  "composition": "mean of per-fold calibrated probabilities; fold_p = sigmoid(a * (X @ coef + intercept) + b); sigmoid(z) = 1 / (1 + exp(z))",
+  "positive_class_index": 1,
+  "folds": [
+    {
+      "lr_coef": [
+        1.7250417700951033,
+        -0.12087962268207843,
+        0.0,
+        -0.006771196145474318
+      ],
+      "lr_intercept": -0.209053527038665,
+      "platt_a": -1.091214155312586,
+      "platt_b": 0.036566648326901305
+    },
+    {
+      "lr_coef": [
+        1.8354613478944009,
+        -0.14662761270407007,
+        0.0,
+        -0.004976927582353668
+      ],
+      "lr_intercept": -0.1964010003212986,
+      "platt_a": -0.9066648847707361,
+      "platt_b": 0.027458460167835624
+    },
+    {
+      "lr_coef": [
+        1.771492929844035,
+        -0.2536252711975179,
+        0.0,
+        0.009493961782869655
+      ],
+      "lr_intercept": -0.051215557239255464,
+      "platt_a": -1.001549295092534,
+      "platt_b": -0.06105632068742221
+    }
+  ]
+}

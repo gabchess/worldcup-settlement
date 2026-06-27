@@ -1,0 +1,14 @@
+{
+  "name": "worldcup-agent",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "verify": "ts-node verify.ts",
+    "test": "ts-node test-stub.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
