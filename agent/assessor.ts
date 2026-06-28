@@ -26,21 +26,36 @@ import {
 export function buildPrompt(
   event: TriggerEvent,
   modelProbability: number,
-  position: PositionContext,
+  position: PositionContext
 ): string {
   const { type, fixtureId, fromState, toState } = event;
-  const scoreFrom = `${fromState.homeScore ?? "?"}–${fromState.awayScore ?? "?"}`;
+  const scoreFrom = `${fromState.homeScore ?? "?"}–${
+    fromState.awayScore ?? "?"
+  }`;
   const scoreTo = `${toState.homeScore ?? "?"}–${toState.awayScore ?? "?"}`;
   const minute = toState.currentMinute ?? "?";
   const redFrom = fromState.redCardDelta ?? "?";
   const redTo = toState.redCardDelta ?? "?";
 
+  const edgeVal = event.edge ?? 0;
+  const impliedP = modelProbability - edgeVal;
+  const eventBlock =
+    type === "edge"
+      ? `EVENT: EDGE OPPORTUNITY — model P(win) ${(
+          modelProbability * 100
+        ).toFixed(1)}% vs market-implied ${(impliedP * 100).toFixed(
+          1
+        )}% (edge ${edgeVal.toFixed(
+          4
+        )}). No new match event; the agent found a mispriced line.`
+      : `EVENT: ${type === "goal" ? "GOAL" : "RED CARD"}
+Score: ${scoreFrom} → ${scoreTo}
+Red card delta (home−away): ${redFrom} → ${redTo}`;
+
   return `You are an in-play football trading assistant. A material event just occurred.
 
-EVENT: ${type === "goal" ? "GOAL" : "RED CARD"}
+${eventBlock}
 Fixture ID: ${fixtureId}
-Score: ${scoreFrom} → ${scoreTo}
-Red card delta (home−away): ${redFrom} → ${redTo}
 Match minute: ${minute}'
 Match phase (1–7): ${toState.matchPhase ?? "unknown"}
 Odds (home/draw/away): [${toState.prices.join(", ")}]
@@ -51,9 +66,16 @@ Side: ${position.side}
 Stake: ${position.stake} units
 Entry odds: ${position.entryOdds ?? "none"}
 
-MODEL PROBABILITY (P(goals ≤ 15 min remaining)): ${(modelProbability * 100).toFixed(1)}%
+MODEL PROBABILITY (P(goals ≤ 15 min remaining)): ${(
+    modelProbability * 100
+  ).toFixed(1)}%
 
-Assess whether this event materially changes the position. Provide:
+${
+  type === "edge"
+    ? "Explain why this trade is +EV based on the model-vs-market probability gap. Do NOT mention goals or cards unless the match state reflects one."
+    : "Assess whether this event materially changes the position."
+}
+Provide:
 1. A brief assessment (2–3 sentences) of how this event affects the trade thesis.
 2. A suggested action: hold | increase | decrease | exit
 3. A concise reasoning trace (the logic chain, max 4 sentences) that serves as a public trust signal.
@@ -125,7 +147,7 @@ export class RealAssessor implements LLMAssessor {
   async assess(
     event: TriggerEvent,
     modelProbability: number,
-    position: PositionContext,
+    position: PositionContext
   ): Promise<AssessmentResult> {
     // Read key at call time — never stored outside this function scope.
     const apiKey = fs.readFileSync(this.keyPath, "utf8").trim();
@@ -160,22 +182,52 @@ export class StubAssessor implements LLMAssessor {
   async assess(
     event: TriggerEvent,
     modelProbability: number,
-    _position: PositionContext,
+    _position: PositionContext
   ): Promise<AssessmentResult> {
-    const isGoal = event.type === "goal";
     const scoreDiff = event.toState.scoreDifferential ?? 0;
-
-    const assessment = isGoal
-      ? `Goal changed score differential to ${scoreDiff}. Model P=${(modelProbability * 100).toFixed(1)}%. Assessing position impact.`
-      : `Red card shifts balance. Red card delta now ${event.toState.redCardDelta}. Model P=${(modelProbability * 100).toFixed(1)}%.`;
 
     // Simple heuristic for the stub: if model P is high and we're behind, exit.
     const suggestedAction: SuggestedAction =
       modelProbability > 0.6 && scoreDiff < 0 ? "exit" : "hold";
 
+    if (event.type === "edge") {
+      const edgeVal = event.edge ?? 0;
+      const impliedP = modelProbability - edgeVal;
+      const assessment = `Edge opportunity: model P(win) ${(
+        modelProbability * 100
+      ).toFixed(1)}% vs market-implied ${(impliedP * 100).toFixed(
+        1
+      )}% (edge ${edgeVal.toFixed(4)}). No match event occurred.`;
+      const reasoningTrace = `Model probability ${(
+        modelProbability * 100
+      ).toFixed(1)}% exceeds market-implied ${(impliedP * 100).toFixed(
+        1
+      )}% by ${(edgeVal * 100).toFixed(
+        2
+      )}pp. This mispricing is the trade trigger — not a goal or card. ${suggestedAction} recommended given current position.`;
+      return { assessment, suggestedAction, reasoningTrace };
+    }
+
+    const isGoal = event.type === "goal";
+    const assessment = isGoal
+      ? `Goal changed score differential to ${scoreDiff}. Model P=${(
+          modelProbability * 100
+        ).toFixed(1)}%. Assessing position impact.`
+      : `Red card shifts balance. Red card delta now ${
+          event.toState.redCardDelta
+        }. Model P=${(modelProbability * 100).toFixed(1)}%.`;
+
     const reasoningTrace = isGoal
-      ? `Event: goal. Score differential moved to ${scoreDiff}. Model probability ${(modelProbability * 100).toFixed(1)}% suggests ${suggestedAction} is appropriate given current market prices.`
-      : `Event: red_card. Red card delta ${event.toState.redCardDelta} increases home disadvantage. Model probability ${(modelProbability * 100).toFixed(1)}% informs ${suggestedAction} recommendation.`;
+      ? `Event: goal. Score differential moved to ${scoreDiff}. Model probability ${(
+          modelProbability * 100
+        ).toFixed(
+          1
+        )}% suggests ${suggestedAction} is appropriate given current market prices.`
+      : `Event: red_card. Red card delta ${
+          event.toState.redCardDelta
+        } increases home disadvantage. Model probability ${(
+          modelProbability * 100
+        ).toFixed(1)}% informs ${suggestedAction} recommendation.`;
 
     return { assessment, suggestedAction, reasoningTrace };
   }

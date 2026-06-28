@@ -564,18 +564,19 @@ async function runLiveLoop(
             // --- Opus bet-decision narrative (non-blocking) ---
             // Ask the assessor WHY this trade was taken. Runs AFTER the bet
             // lands so a failure here can NEVER affect the position or loop.
-            // ponytail: reuse TriggerEvent shape (type="goal") — assessor only
-            // needs state context; the bet-specific fields go in position.
+            // Uses type="edge" so the narrative describes the real reason:
+            // model-vs-market probability gap, not a fictional goal/card.
             const formulaTrace = `Edge=${edge.toFixed(4)}, f*=${fStar.toFixed(
               4
             )}, model_P=${modelP.toFixed(4)}`;
             let betNarrative = formulaTrace; // fallback if Opus fails/times out
             try {
               const betEvent = {
-                type: "goal" as const,
+                type: "edge" as const,
                 fixtureId,
                 fromState: prevState ?? state,
                 toState: state,
+                edge, // model-vs-market gap; impliedP = modelP - edge
               };
               const betPosition = {
                 side: "home" as const,
@@ -605,10 +606,11 @@ async function runLiveLoop(
             // Log the bet cycle to traces.jsonl so Garry has the tx
             logTrace(
               {
-                type: "goal", // synthetic trigger type for bet-cycle trace
+                type: "edge", // truthful: bet triggered by model-vs-market edge
                 fixtureId,
                 fromState: prevState ?? state,
                 toState: state,
+                edge,
               },
               modelP,
               { side: "home", stake: stakeLamports, entryOdds: homeOdds },

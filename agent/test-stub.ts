@@ -383,28 +383,47 @@ async function run(): Promise<void> {
   // Verifies: after a successful bet, the assessor.assess() call fires and its
   // reasoningTrace replaces the formula string in the logged trace.
 
-  await test("bet-path: StubAssessor returns a narrative (not formula string) for the bet event", async () => {
+  await test("bet-path: StubAssessor returns edge-language narrative for edge event", async () => {
     const state = makeState({ scoreDifferential: 1, currentMinute: 60 });
     const betEvent = {
-      type: "goal" as const,
+      type: "edge" as const,
       fixtureId: 1,
       fromState: state,
       toState: state,
+      edge: 0.351, // model_P(0.419) - market_implied(0.068) — real demo numbers
     };
     const betPosition: PositionContext = {
       side: "home",
       stake: 50_000,
       entryOdds: 2.0,
     };
-    const result = await new StubAssessor().assess(betEvent, 0.55, betPosition);
-    // The stub returns a reasoningTrace string — not the formula "Edge=..." string.
+    const result = await new StubAssessor().assess(
+      betEvent,
+      0.419,
+      betPosition
+    );
+    // The stub must describe the REAL reason: model-vs-market edge, not a goal.
     assert.ok(
       result.reasoningTrace.length > 0,
       "reasoningTrace must be non-empty"
     );
     assert.ok(
       !result.reasoningTrace.startsWith("Edge="),
-      `reasoningTrace should be Opus narrative, not formula string; got: ${result.reasoningTrace}`
+      `reasoningTrace should be narrative, not formula string; got: ${result.reasoningTrace}`
+    );
+    // Must reference the model-vs-market gap (edge-language), not a goal.
+    const traceHasEdgeLanguage =
+      result.reasoningTrace.includes("market-implied") ||
+      result.reasoningTrace.includes("edge") ||
+      result.reasoningTrace.includes("mispricing");
+    assert.ok(
+      traceHasEdgeLanguage,
+      `reasoningTrace must reference model-vs-market edge; got: ${result.reasoningTrace}`
+    );
+    assert.ok(
+      !result.reasoningTrace.includes("Event: goal") &&
+        !result.reasoningTrace.includes("score differential moved"),
+      `edge narrative must NOT claim a goal occurred; got: ${result.reasoningTrace}`
     );
     // Confirm it would be written correctly via logTrace.
     const tmpFile = path.join(

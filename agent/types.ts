@@ -25,13 +25,15 @@ export interface MatchState {
 // Trigger detector
 // ---------------------------------------------------------------------------
 
-export type TriggerType = "goal" | "red_card";
+export type TriggerType = "goal" | "red_card" | "edge";
 
 export interface TriggerEvent {
   type: TriggerType;
   fixtureId: number;
   fromState: MatchState;
   toState: MatchState;
+  /** Present only when type="edge": model-vs-market probability gap. */
+  edge?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,7 +60,7 @@ export interface LLMAssessor {
   assess(
     event: TriggerEvent,
     modelProbability: number,
-    position: PositionContext,
+    position: PositionContext
   ): Promise<AssessmentResult>;
 }
 
