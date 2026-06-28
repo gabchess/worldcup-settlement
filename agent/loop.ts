@@ -590,8 +590,17 @@ async function runLiveLoop(
                 `bet-narrative cycle=${cycle}`
               );
               if (betAssessment !== null) {
-                betNarrative = betAssessment.reasoningTrace;
-                console.log(`  Opus bet narrative: ${betNarrative}`);
+                const trace = betAssessment.reasoningTrace;
+                // Structural guard: edge narratives must not claim a goal/score
+                // event occurred. Discard and fall back to the formula string.
+                if (/goal|score differential|score moved/i.test(trace)) {
+                  console.log(
+                    "  bet-narrative rejected (false event-language) — using formula fallback"
+                  );
+                } else {
+                  betNarrative = trace;
+                  console.log(`  Opus bet narrative: ${betNarrative}`);
+                }
               }
             } catch (narrativeErr) {
               console.error(

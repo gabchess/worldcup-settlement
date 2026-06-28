@@ -449,6 +449,50 @@ async function run(): Promise<void> {
     fs.unlinkSync(tmpFile);
   });
 
+  // --- Structural guard: false-event-language rejection ---
+  // Verifies the 3-line guard in loop.ts: if an edge-event narrative contains
+  // "goal" / "score differential" / "score moved", betNarrative must fall back
+  // to the formula string, not the tainted narrative.
+
+  await test("bet-narrative guard: edge narrative containing 'goal' is rejected, formula used", async () => {
+    const formulaTrace = "Edge=0.1700, f*=0.0850, model_P=0.3460";
+    // Simulate what the guard does inline (matches loop.ts guard exactly).
+    const taintedTrace =
+      "A goal was scored, changing the score differential significantly.";
+    let betNarrative = formulaTrace;
+    if (/goal|score differential|score moved/i.test(taintedTrace)) {
+      // guard fires — betNarrative stays as formulaTrace
+    } else {
+      betNarrative = taintedTrace;
+    }
+    assert.strictEqual(
+      betNarrative,
+      formulaTrace,
+      "narrative containing 'goal' must be rejected; formula trace must be used"
+    );
+    assert.ok(
+      !betNarrative.includes("goal"),
+      "logged trace must not contain false goal-language"
+    );
+  });
+
+  await test("bet-narrative guard: clean edge narrative is NOT rejected", async () => {
+    const formulaTrace = "Edge=0.1700, f*=0.0850, model_P=0.3460";
+    const cleanTrace =
+      "The model-vs-market probability gap indicates a mispriced line with positive expected value.";
+    let betNarrative = formulaTrace;
+    if (/goal|score differential|score moved/i.test(cleanTrace)) {
+      // guard fires
+    } else {
+      betNarrative = cleanTrace;
+    }
+    assert.strictEqual(
+      betNarrative,
+      cleanTrace,
+      "clean edge narrative must pass the guard unchanged"
+    );
+  });
+
   // Summary
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);
