@@ -185,5 +185,3 @@ npm run dev
 **Program ID:** `FFnQCXKLVLgA4Wn6PjH9mitKpHFqFtKz9HcF6qFRWnmp`
 
 **Live dashboard:** https://dashboard-three-kappa-83.vercel.app
-
-**Submission link:** TBD

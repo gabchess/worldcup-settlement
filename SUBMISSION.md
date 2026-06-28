@@ -43,26 +43,22 @@ Settlement proof source:
 solana program show FFnQCXKLVLgA4Wn6PjH9mitKpHFqFtKz9HcF6qFRWnmp --url devnet
 ```
 
-**Live init_market transaction:** `3w5bTL2qr...` (placed from live TxLINE fixture data for England vs Panama)
+**Live autonomous bet (open_position):** [`3YznzQ4S...`](https://explorer.solana.com/tx/3YznzQ4S3RNZudfDLt2f6BDe7NvA3tSCharWtKkDrjiieWcB1cy8gbERFzdDyvfsgXfGbc6KdUoLCRTNnouN5dxL?cluster=devnet)
 
-This transaction was initiated by the autonomous loop from a real TxLINE fixture snapshot, confirming the full auth-to-on-chain path works on devnet.
+**Market init for that bet:** [`2tU4aShf...`](https://explorer.solana.com/tx/2tU4aShfwjhikuzTSBV1C2883VEF2awDKsmnjsjCmCsntgxj6UvfSn22biM2ePwWcW1BvuefWNnWc3c9ZxEFYCyv?cluster=devnet)
+
+The autonomous loop authenticated to TxLINE, read a live in-running match, found a model edge, sized the stake with fractional Kelly, and opened the position on devnet with no human input. Both transactions are Finalized.
 
 ---
 
 ## Live-Data Evidence
 
 - Authenticated against TxLINE devnet and fetched live World Cup fixtures
-- Captured scores and odds for England vs Panama (FixtureId from live snapshot)
-- Retrieved in-play score fields: Goals, YellowCards, RedCards, Clock (minutes)
-- Retrieved odds with InRunning flag set
-- Placed a real `init_market` on-chain transaction from live fixture data
-- The full capture artifact is at `~/.arcana/c12-live-capture.json`
-
----
-
-## Demo Video
-
-TBD
+- Read a live in-running match (Congo DR vs Uzbekistan) and an earlier live match (England vs Panama)
+- Retrieved in-play score fields from the live feed: Goals, YellowCards, RedCards, Clock (minutes)
+- Retrieved odds with the InRunning flag set
+- Opened a real on-chain position from live in-running data (the open_position transaction above)
+- Confirmed the on-chain `daily_scores_roots` Merkle root for the current epoch on devnet, which is the settlement proof source
 
 ---
 
