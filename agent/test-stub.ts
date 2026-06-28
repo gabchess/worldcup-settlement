@@ -493,6 +493,100 @@ async function run(): Promise<void> {
     );
   });
 
+  // --- GUARD 1: empty-odds skip ---
+  // Mirrors the guard added to both live and stub Kelly paths in loop.ts.
+  // When prices is empty, prices[0] is undefined → kellyStake gets NaN decimalOdds
+  // → b=NaN → `b<=0` is false for NaN → BN(NaN) throw. The guard catches this
+  // before kellyStake is ever called.
+
+  await test("guard1: empty prices produces non-finite homeOdds (guard precondition)", () => {
+    const emptyPrices: number[] = [];
+    const homeOdds = emptyPrices[0]; // undefined
+    // Confirm the precondition that justifies the guard.
+    assert.ok(
+      emptyPrices.length === 0 || !isFinite(homeOdds) || homeOdds <= 0,
+      "empty prices must trigger guard condition"
+    );
+  });
+
+  await test("guard1: guard condition correctly passes for valid prices", () => {
+    const validPrices = [2.1, 3.4, 3.8];
+    const homeOdds = validPrices[0];
+    const shouldGuard =
+      validPrices.length === 0 || !isFinite(homeOdds) || homeOdds <= 0;
+    assert.strictEqual(
+      shouldGuard,
+      false,
+      "valid prices must not trigger guard"
+    );
+  });
+
+  // --- GUARD 2: bet-failed must not increment consecutiveNoTrades ---
+  // Mirrors the guard added to both live and stub no-trade tracking in loop.ts.
+  // A bet-failed decision is a tx/RPC error, not "agent found no edge", so it
+  // must not count toward the ANOMALY_HALT streak.
+
+  await test("guard2: bet-failed decision does not increment consecutiveNoTrades", () => {
+    let consecutiveNoTrades = 0;
+    const decision: string = "bet-failed";
+    const isLive = true;
+    // Mirror the guarded logic from loop.ts:
+    if (decision === "bet") {
+      consecutiveNoTrades = 0;
+    } else if (isLive && decision !== "bet-failed") {
+      consecutiveNoTrades++;
+    }
+    assert.strictEqual(
+      consecutiveNoTrades,
+      0,
+      "bet-failed must not increment no-trade streak"
+    );
+  });
+
+  await test("guard2: genuine no-edge decision still increments consecutiveNoTrades", () => {
+    let consecutiveNoTrades = 0;
+    const decision: string = "skip-no-edge";
+    const isLive = true;
+    if (decision === "bet") {
+      consecutiveNoTrades = 0;
+    } else if (isLive && decision !== "bet-failed") {
+      consecutiveNoTrades++;
+    }
+    assert.strictEqual(
+      consecutiveNoTrades,
+      1,
+      "genuine no-trade must still count toward anomaly streak"
+    );
+  });
+
+  await test("guard2: bet-failed in a series does not accumulate toward NO_TRADE_HALT_CYCLES", () => {
+    let consecutiveNoTrades = 0;
+    const isLive = true;
+    // Simulate NO_TRADE_HALT_CYCLES bet-failed events — should never trip threshold.
+    for (let i = 0; i < NO_TRADE_HALT_CYCLES; i++) {
+      const decision: string = "bet-failed";
+      if (decision === "bet") {
+        consecutiveNoTrades = 0;
+      } else if (isLive && decision !== "bet-failed") {
+        consecutiveNoTrades++;
+      }
+    }
+    assert.strictEqual(
+      consecutiveNoTrades,
+      0,
+      `${NO_TRADE_HALT_CYCLES} consecutive bet-failed events must not reach the halt threshold`
+    );
+    const anomaly = checkAnomalies(
+      consecutiveNoTrades,
+      BALANCE_FLOOR_LAMPORTS + 1
+    );
+    assert.strictEqual(
+      anomaly,
+      null,
+      "no anomaly halt when only RPC errors occurred"
+    );
+  });
+
   // Summary
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

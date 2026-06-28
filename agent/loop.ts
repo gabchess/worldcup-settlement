@@ -525,6 +525,24 @@ async function runLiveLoop(
 
         // Edge filter + Kelly sizing + open_position
         if (edge > EDGE_THRESHOLD && !positionOpened) {
+          // GUARD 1: empty or invalid prices → skip cleanly (prevents BN(NaN) throw)
+          if (
+            state.prices.length === 0 ||
+            !isFinite(state.prices[0]) ||
+            state.prices[0] <= 0
+          ) {
+            console.log(
+              "  skip: no valid odds this cycle (prices array empty or non-finite)"
+            );
+            return {
+              cycle,
+              fixtureId,
+              modelP,
+              marketP: mktP,
+              edge,
+              decision: "skip-no-edge",
+            };
+          }
           const homeOdds = state.prices[0];
           const { stake: stakeLamports, fStar } = kellyStake(modelP, homeOdds);
 
@@ -692,7 +710,9 @@ async function runLiveLoop(
       if (lastState !== null) prevState = lastState;
       if (cycleResult.decision === "bet") {
         consecutiveNoTrades = 0;
-      } else if (isActuallyLive) {
+      } else if (isActuallyLive && cycleResult.decision !== "bet-failed") {
+        // GUARD 2: bet-failed = tx/RPC error, not a genuine no-trade; exclude
+        // from the no-trade streak so devnet RPC flakiness can't trip ANOMALY_HALT.
         consecutiveNoTrades++;
       }
     }
@@ -1033,6 +1053,24 @@ async function main(): Promise<void> {
 
         // Edge filter + Kelly bet
         if (edge > EDGE_THRESHOLD && !positionOpened) {
+          // GUARD 1: empty or invalid prices → skip cleanly (prevents BN(NaN) throw)
+          if (
+            state.prices.length === 0 ||
+            !isFinite(state.prices[0]) ||
+            state.prices[0] <= 0
+          ) {
+            console.log(
+              "  skip: no valid odds this cycle (prices array empty or non-finite)"
+            );
+            return {
+              cycle,
+              fixtureId: state.fixtureId,
+              modelP,
+              marketP: mktP,
+              edge,
+              decision: "skip-no-edge",
+            };
+          }
           const homeOdds = state.prices[0];
           const { stake: stakeLamports, fStar } = kellyStake(modelP, homeOdds);
 
@@ -1148,7 +1186,9 @@ async function main(): Promise<void> {
       // false-halt the loop when a feed delays the live flag.
       if (cycleResult.decision === "bet") {
         consecutiveNoTrades = 0;
-      } else if (state.isLive) {
+      } else if (state.isLive && cycleResult.decision !== "bet-failed") {
+        // GUARD 2: bet-failed = tx/RPC error, not a genuine no-trade; exclude
+        // from the no-trade streak so devnet RPC flakiness can't trip ANOMALY_HALT.
         consecutiveNoTrades++;
       }
     }
