@@ -13,5 +13,20 @@
     "suggestedAction": "hold",
     "reasoningTrace": "Edge=0.3510, f*=0.4190, model_P=0.4190",
     "impl": "real"
+  },
+  {
+    "timestamp": "2026-06-28T19:44:21.682Z",
+    "fixtureId": 18167317,
+    "eventType": "edge",
+    "modelProbability": 0.3364106023715438,
+    "position": {
+      "side": "home",
+      "stake": 6250000,
+      "entryOdds": 18600
+    },
+    "assessment": "Bet placed. stake=6250000 lamports, tx=3XqisSghr5VkUc3Tkx4kXet8ew3XQo4KvvgPmPkncLhdGXdHZdgLVTASa94dp3g5hErD65mrivc9Pbp8X1mJjoQx",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Market implies 5.4% but model estimates 33.6%, so the entry odds of 186.0 overcompensate relative to fair value (fair price ~2.98). Expected value is strongly positive: 0.336 stake-weighted payoff at 186.0 dwarfs the implied breakeven. The edge is unusually large, suggesting either genuine mispricing or model overconfidence on a deep longshot, so I avoid increasing into a potentially fragile estimate. Holding captures the existing favorable EV while limiting added risk on an extreme outlier line.",
+    "impl": "real"
   }
 ]
