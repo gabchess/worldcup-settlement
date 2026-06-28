@@ -379,6 +379,57 @@ async function run(): Promise<void> {
     );
   });
 
+  // --- Bet-path Opus narrative (stub) ---
+  // Verifies: after a successful bet, the assessor.assess() call fires and its
+  // reasoningTrace replaces the formula string in the logged trace.
+
+  await test("bet-path: StubAssessor returns a narrative (not formula string) for the bet event", async () => {
+    const state = makeState({ scoreDifferential: 1, currentMinute: 60 });
+    const betEvent = {
+      type: "goal" as const,
+      fixtureId: 1,
+      fromState: state,
+      toState: state,
+    };
+    const betPosition: PositionContext = {
+      side: "home",
+      stake: 50_000,
+      entryOdds: 2.0,
+    };
+    const result = await new StubAssessor().assess(betEvent, 0.55, betPosition);
+    // The stub returns a reasoningTrace string — not the formula "Edge=..." string.
+    assert.ok(
+      result.reasoningTrace.length > 0,
+      "reasoningTrace must be non-empty"
+    );
+    assert.ok(
+      !result.reasoningTrace.startsWith("Edge="),
+      `reasoningTrace should be Opus narrative, not formula string; got: ${result.reasoningTrace}`
+    );
+    // Confirm it would be written correctly via logTrace.
+    const tmpFile = path.join(
+      os.tmpdir(),
+      `c8-bet-narrative-test-${Date.now()}.jsonl`
+    );
+    const record = logTrace(
+      betEvent,
+      0.55,
+      betPosition,
+      result,
+      "stub",
+      tmpFile
+    );
+    const line = fs.readFileSync(tmpFile, "utf8").trim();
+    const parsed = JSON.parse(line);
+    assert.strictEqual(
+      parsed.reasoningTrace,
+      result.reasoningTrace,
+      "logTrace must persist the narrative"
+    );
+    assert.ok(parsed.reasoningTrace.length > 0);
+    fs.unlinkSync(tmpFile);
+  });
+
   // Summary
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

@@ -560,6 +560,48 @@ async function runLiveLoop(
             positionOpened = true;
             positionStakeLamports = stakeLamports;
             console.log(`  OPEN_POSITION TX: ${txSigBet}`);
+
+            // --- Opus bet-decision narrative (non-blocking) ---
+            // Ask the assessor WHY this trade was taken. Runs AFTER the bet
+            // lands so a failure here can NEVER affect the position or loop.
+            // ponytail: reuse TriggerEvent shape (type="goal") — assessor only
+            // needs state context; the bet-specific fields go in position.
+            const formulaTrace = `Edge=${edge.toFixed(4)}, f*=${fStar.toFixed(
+              4
+            )}, model_P=${modelP.toFixed(4)}`;
+            let betNarrative = formulaTrace; // fallback if Opus fails/times out
+            try {
+              const betEvent = {
+                type: "goal" as const,
+                fixtureId,
+                fromState: prevState ?? state,
+                toState: state,
+              };
+              const betPosition = {
+                side: "home" as const,
+                stake: stakeLamports,
+                entryOdds: homeOdds,
+              };
+              const betAssessment = await withTimeout(
+                assessor.assess(betEvent, modelP, betPosition),
+                LLM_TIMEOUT_MS,
+                null,
+                `bet-narrative cycle=${cycle}`
+              );
+              if (betAssessment !== null) {
+                betNarrative = betAssessment.reasoningTrace;
+                console.log(`  Opus bet narrative: ${betNarrative}`);
+              }
+            } catch (narrativeErr) {
+              console.error(
+                `  bet-narrative Opus call failed: ${
+                  narrativeErr instanceof Error
+                    ? narrativeErr.message
+                    : narrativeErr
+                } — using formula fallback`
+              );
+            }
+
             // Log the bet cycle to traces.jsonl so Garry has the tx
             logTrace(
               {
@@ -573,9 +615,7 @@ async function runLiveLoop(
               {
                 assessment: `Bet placed. stake=${stakeLamports} lamports, tx=${txSigBet}`,
                 suggestedAction: "hold",
-                reasoningTrace: `Edge=${edge.toFixed(4)}, f*=${fStar.toFixed(
-                  4
-                )}, model_P=${modelP.toFixed(4)}`,
+                reasoningTrace: betNarrative,
               },
               "real"
             );
