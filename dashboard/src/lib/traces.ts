@@ -43,11 +43,18 @@ export const openPositions: Trace[] = Array.from(
   dedupedByFixture.values()
 ).filter((t) => t.position.stake > 0 && t.position.side !== "none");
 
-// Mark-to-model P&L per position: stake * (entryOdds * modelProbability - 1)
-// ponytail: expected-value mark only; upgrade when agent emits realized settled P&L; ceiling: pre-mainnet
+// Mark-to-model P&L per position: stake * (decimalOdds * modelProbability - 1)
+// TxLINE Prices are integer-scaled ×1000 (e.g. 14700 → 14.7 decimal odds).
+// Detected by value >= 100; real decimal odds are always < 100.
+// ponytail: threshold heuristic, upgrade to explicit unit field when agent emits one; ceiling: pre-mainnet
+function toDecimalOdds(raw: number): number {
+  return raw >= 100 ? raw / 1000 : raw;
+}
+
 function pnlEstimate(t: Trace): number {
   if (!t.position.entryOdds || t.position.stake === 0) return 0;
-  return t.position.stake * (t.position.entryOdds * t.modelProbability - 1);
+  const decimalOdds = toDecimalOdds(t.position.entryOdds);
+  return t.position.stake * (decimalOdds * t.modelProbability - 1);
 }
 
 export const positionsWithPnl = openPositions.map((t) => ({
