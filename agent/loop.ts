@@ -596,10 +596,14 @@ async function runLiveLoop(
                 toState: state,
                 edge, // model-vs-market gap; impliedP = modelP - edge
               };
+              // Normalize to decimal odds for the assessor narrative (same scale
+              // the dashboard uses). Raw TxLINE prices are ×1000-scaled integers
+              // (e.g. 18600 → 18.6). The on-chain bet is unaffected — only this
+              // narrative input is normalized.
               const betPosition = {
                 side: "home" as const,
                 stake: stakeLamports,
-                entryOdds: homeOdds,
+                entryOdds: homeOdds >= 100 ? homeOdds / 1000 : homeOdds,
               };
               const betAssessment = await withTimeout(
                 assessor.assess(betEvent, modelP, betPosition),

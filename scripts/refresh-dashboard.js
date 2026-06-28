@@ -41,10 +41,13 @@ const records = lines
       return null;
     }
   })
-  .filter(Boolean);
+  .filter(Boolean)
+  // ponytail: filter to real on-chain bets only; synthetic stubs (impl=="stub")
+  // are dev scaffolding and should never appear in the dashboard snapshot.
+  .filter((r) => r.impl === "real");
 
 fs.writeFileSync(DEST, JSON.stringify(records, null, 2) + "\n", "utf8");
-console.log(`Wrote ${records.length} trace(s) to ${DEST}`);
+console.log(`Wrote ${records.length} real trace(s) to ${DEST}`);
 console.log(
   `Latest: ${records[records.length - 1]?.timestamp} fixtureId=${
     records[records.length - 1]?.fixtureId
