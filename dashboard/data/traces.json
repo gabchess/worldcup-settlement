@@ -88,5 +88,350 @@
     "suggestedAction": "hold",
     "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
     "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T21:46:48.978Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T21:46:48.979Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T21:51:12.647Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T21:51:12.650Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T21:57:53.877Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T21:57:54.000Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:15:16.922Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:15:17.047Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:16:02.744Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:16:02.944Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:37.773Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:37.970Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:46.579Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:46.719Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:51.584Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:51.781Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:57.225Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:48:57.368Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:49:03.250Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:49:03.469Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:49:49.300Z",
+    "fixtureId": 20630,
+    "eventType": "goal",
+    "modelProbability": 0.2616250143604862,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Goal changed score differential to 0. Model P=26.2%. Assessing position impact.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: goal. Score differential moved to 0. Model probability 26.2% suggests hold is appropriate given current market prices.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T22:49:49.436Z",
+    "fixtureId": 20630,
+    "eventType": "red_card",
+    "modelProbability": 0.22819975527979808,
+    "position": {
+      "side": "none",
+      "stake": 0,
+      "entryOdds": null
+    },
+    "assessment": "Red card shifts balance. Red card delta now 0. Model P=22.8%.",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Event: red_card. Red card delta 0 increases home disadvantage. Model probability 22.8% informs hold recommendation.",
+    "impl": "stub"
+  },
+  {
+    "timestamp": "2026-06-27T23:56:11.770Z",
+    "fixtureId": 17926704,
+    "eventType": "goal",
+    "modelProbability": 0.41900726446295455,
+    "position": {
+      "side": "home",
+      "stake": 6250000,
+      "entryOdds": 14700
+    },
+    "assessment": "Bet placed. stake=6250000 lamports, tx=3YznzQ4S3RNZudfDLt2f6BDe7NvA3tSCharWtKkDrjiieWcB1cy8gbERFzdDyvfsgXfGbc6KdUoLCRTNnouN5dxL",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Edge=0.3510, f*=0.4190, model_P=0.4190",
+    "impl": "real"
   }
 ]
