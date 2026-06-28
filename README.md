@@ -128,14 +128,18 @@ dashboard/                      Next.js status dashboard
 
 ```bash
 # Build
-cargo build-bpf
+anchor build
 
 # Run tests (in-process, no validator required).
 # build.rs compiles the test-oracle build automatically, so no flags are needed.
 cargo test
 ```
 
-15 tests (8 unit + 7 integration), all green, cover: market init, position opens, double-settle guard, match_id replay guard, settle authority, Merkle proof verification, and Plan-B oracle path.
+14 tests (7 unit + 7 integration), all green, cover: market init, position opens, double-settle guard, match_id replay guard, settle authority, Merkle proof verification, and Plan-B oracle path.
+
+### Prerequisites
+
+The agent reads `~/secrets/solana-worldcup-devnet-wallet.md` at startup before mode-branching. Ensure this file exists on the target machine.
 
 ### Prediction model
 
@@ -144,7 +148,7 @@ cd model
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 # Train (downloads StatsBomb Open Data)
-../.venv/bin/python train.py
+.venv/bin/python train.py
 
 # Verify predictions
 python predict_sample.py

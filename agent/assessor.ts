@@ -66,9 +66,7 @@ Side: ${position.side}
 Stake: ${position.stake} units
 Entry odds: ${position.entryOdds ?? "none"}
 
-MODEL PROBABILITY (P(goals ≤ 15 min remaining)): ${(
-    modelProbability * 100
-  ).toFixed(1)}%
+MODEL PROBABILITY (P(home wins match)): ${(modelProbability * 100).toFixed(1)}%
 
 ${
   type === "edge"
