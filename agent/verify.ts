@@ -64,7 +64,7 @@ const position: PositionContext = {
 };
 
 // Model probability is a passed-in param (C9 wires Python model output).
-const modelProbability = 0.72; // P(goals ≤ 15 min remaining)
+const modelProbability = 0.72; // P(home wins match)
 
 // ---------------------------------------------------------------------------
 // Run
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   const event = detectTrigger(prevState, nextState);
   if (!event) {
     console.error(
-      "ERROR: detectTrigger returned null — no material event detected.",
+      "ERROR: detectTrigger returned null — no material event detected."
     );
     process.exit(1);
   }
@@ -98,14 +98,14 @@ async function main(): Promise<void> {
     position,
     result,
     "real",
-    TRACES_PATH,
+    TRACES_PATH
   );
   console.log(`\nTrace logged to: ${TRACES_PATH}`);
   console.log("\n=== LOGGED TRACE ===");
   console.log(JSON.stringify(record, null, 2));
   console.log("===================");
   console.log(
-    "\nVERIFIER_OK: trigger fired, real Opus call succeeded, trace logged.",
+    "\nVERIFIER_OK: trigger fired, real Opus call succeeded, trace logged."
   );
 }
 
