@@ -82,9 +82,7 @@ Network: Solana devnet. This is not the TxODDS oracle program.
 solana program show FFnQCXKLVLgA4Wn6PjH9mitKpHFqFtKz9HcF6qFRWnmp --url devnet
 ```
 
-**Live dashboard:** https://dashboard-three-kappa-83.vercel.app
-
-The dashboard shows last agent action, open positions, live P&L, and the latest Opus reasoning trace.
+The live dashboard (linked above) shows last agent action, open positions, live P&L, and the latest Opus 4.8 reasoning trace.
 
 ---
 

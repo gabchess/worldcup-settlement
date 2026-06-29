@@ -20,7 +20,7 @@ TxODDS x Solana World Cup Hackathon
 
 ## What Was Built
 
-An autonomous AI agent that trades a live World Cup match on Solana from end to end: subscribes to TxLINE for live fixture data, runs an in-play logistic model to produce a win probability, fires Claude Opus 4.8 on material events (goals, red cards) for a trade decision, and calls `open_position` on a deployed Anchor settlement contract.
+I built an autonomous AI agent that trades a live World Cup match on Solana from end to end: it subscribes to TxLINE for live fixture data, runs an in-play logistic model to produce a win probability, fires Claude Opus 4.8 on material events (goals, red cards) for a trade decision, and calls `open_position` on a deployed Anchor settlement contract.
 
 The settlement contract verifies match outcomes using a Merkle proof against the TxODDS on-chain `daily_scores_roots` PDA. A Plan-B trusted-oracle path is available for devnet testing when Merkle proofs are not yet committed.
 
