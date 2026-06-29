@@ -26,7 +26,7 @@ import {
 export function buildPrompt(
   event: TriggerEvent,
   modelProbability: number,
-  position: PositionContext
+  position: PositionContext,
 ): string {
   const { type, fixtureId, fromState, toState } = event;
   const scoreFrom = `${fromState.homeScore ?? "?"}–${
@@ -44,9 +44,9 @@ export function buildPrompt(
       ? `EVENT: EDGE OPPORTUNITY — model P(win) ${(
           modelProbability * 100
         ).toFixed(1)}% vs market-implied ${(impliedP * 100).toFixed(
-          1
+          1,
         )}% (edge ${edgeVal.toFixed(
-          4
+          4,
         )}). No new match event; the agent found a mispriced line.`
       : `EVENT: ${type === "goal" ? "GOAL" : "RED CARD"}
 Score: ${scoreFrom} → ${scoreTo}
@@ -58,7 +58,7 @@ ${eventBlock}
 Fixture ID: ${fixtureId}
 Match minute: ${minute}'
 Match phase (1–7): ${toState.matchPhase ?? "unknown"}
-Odds (home/draw/away): [${toState.prices.join(", ")}]
+Odds (home/draw/away): [${toState.prices.map((p) => (p >= 100 ? p / 1000 : p)).join(", ")}]
 Market overround: ${toState.pct ?? "unknown"}%
 
 CURRENT POSITION:
@@ -145,7 +145,7 @@ export class RealAssessor implements LLMAssessor {
   async assess(
     event: TriggerEvent,
     modelProbability: number,
-    position: PositionContext
+    position: PositionContext,
   ): Promise<AssessmentResult> {
     // Read key at call time — never stored outside this function scope.
     const apiKey = fs.readFileSync(this.keyPath, "utf8").trim();
@@ -180,7 +180,7 @@ export class StubAssessor implements LLMAssessor {
   async assess(
     event: TriggerEvent,
     modelProbability: number,
-    _position: PositionContext
+    _position: PositionContext,
   ): Promise<AssessmentResult> {
     const scoreDiff = event.toState.scoreDifferential ?? 0;
 
@@ -194,14 +194,14 @@ export class StubAssessor implements LLMAssessor {
       const assessment = `Edge opportunity: model P(win) ${(
         modelProbability * 100
       ).toFixed(1)}% vs market-implied ${(impliedP * 100).toFixed(
-        1
+        1,
       )}% (edge ${edgeVal.toFixed(4)}). No match event occurred.`;
       const reasoningTrace = `Model probability ${(
         modelProbability * 100
       ).toFixed(1)}% exceeds market-implied ${(impliedP * 100).toFixed(
-        1
+        1,
       )}% by ${(edgeVal * 100).toFixed(
-        2
+        2,
       )}pp. This mispricing is the trade trigger — not a goal or card. ${suggestedAction} recommended given current position.`;
       return { assessment, suggestedAction, reasoningTrace };
     }
@@ -219,7 +219,7 @@ export class StubAssessor implements LLMAssessor {
       ? `Event: goal. Score differential moved to ${scoreDiff}. Model probability ${(
           modelProbability * 100
         ).toFixed(
-          1
+          1,
         )}% suggests ${suggestedAction} is appropriate given current market prices.`
       : `Event: red_card. Red card delta ${
           event.toState.redCardDelta
