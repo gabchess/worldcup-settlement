@@ -47,7 +47,7 @@ export const openPositions: Trace[] = Array.from(
 // TxLINE Prices are integer-scaled ×1000 (e.g. 14700 → 14.7 decimal odds).
 // Detected by value >= 100; real decimal odds are always < 100.
 // ponytail: threshold heuristic, upgrade to explicit unit field when agent emits one; ceiling: pre-mainnet
-function toDecimalOdds(raw: number): number {
+export function toDecimalOdds(raw: number): number {
   return raw >= 100 ? raw / 1000 : raw;
 }
 
