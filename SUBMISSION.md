@@ -6,14 +6,14 @@
 |---|---|
 | Live dashboard | https://dashboard-three-kappa-83.vercel.app |
 | Repo | https://github.com/gabchess/worldcup-settlement |
-| Demo video | [DEMO_VIDEO_URL -- paste at C13] |
+| Demo video | https://youtu.be/M1O9fO2TZoA |
 | Submission URL | [SUBMISSION_URL -- paste at C15] |
 
 ---
 
 ## Track
 
-**Track 2 -- Prediction Markets and Settlement**
+**Trading Tools and Agents**
 TxODDS x Solana World Cup Hackathon
 
 ---

@@ -8,3 +8,9 @@ test-ledger
 .surfpool
 .arcana
 .venv
+
+# S171 additions
+dashboard/.claude/
+video/public/
+video/node_modules/
+video/out/

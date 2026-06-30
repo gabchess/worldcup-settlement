@@ -2,7 +2,7 @@
 
 An autonomous AI agent that trades a live World Cup match on Solana, settling on-chain using TxODDS oracle data.
 
-**Track 2 -- Prediction Markets and Settlement** | TxODDS x Solana World Cup Hackathon
+**Trading Tools and Agents** | TxODDS x Solana World Cup Hackathon
 
 ## Links
 
@@ -10,7 +10,7 @@ An autonomous AI agent that trades a live World Cup match on Solana, settling on
 |---|---|
 | Live dashboard | https://dashboard-three-kappa-83.vercel.app |
 | Repo | https://github.com/gabchess/worldcup-settlement |
-| Demo video | [DEMO_VIDEO_URL -- paste at C13] |
+| Demo video | https://youtu.be/M1O9fO2TZoA |
 
 ---
 
@@ -190,7 +190,7 @@ npm run dev
 
 ## Submission
 
-**Track:** Track 2 -- Prediction Markets and Settlement
+**Track:** Trading Tools and Agents
 
 **Program ID:** `FFnQCXKLVLgA4Wn6PjH9mitKpHFqFtKz9HcF6qFRWnmp`
 
