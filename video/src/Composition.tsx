@@ -83,7 +83,7 @@ const FONT_GEIST_MONO = `'Geist Mono', 'SF Mono', monospace`;
 function fadeIn(
   frame: number,
   startFrame: number,
-  durationFrames: number = 12,
+  durationFrames: number = 12
 ): number {
   return interpolate(frame, [startFrame, startFrame + durationFrames], [0, 1], {
     extrapolateLeft: "clamp",
@@ -94,13 +94,13 @@ function fadeIn(
 function fadeOut(
   frame: number,
   totalDuration: number,
-  durationFrames: number = 15,
+  durationFrames: number = 15
 ): number {
   return interpolate(
     frame,
     [totalDuration - durationFrames, totalDuration],
     [1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 }
 
@@ -209,7 +209,7 @@ const CardShell: React.FC<CardProps & { children: React.ReactNode }> = ({
     localFrame,
     [totalCardFrames - 20, totalCardFrames],
     [1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   const opacity = Math.min(entryOpacity, exitOpacity);
 
@@ -592,39 +592,6 @@ const CardSizeAndSend: React.FC<CardProps> = (props) => {
         </div>
       </div>
     </CardShell>
-  );
-};
-
-// ── Letterbox wrapper (clip in a parchment field, no stretch) ────────────
-
-const LetterboxClip: React.FC<{
-  src: string;
-  clipDurationFrames: number;
-  sequenceDurationFrames: number;
-}> = ({ src, clipDurationFrames, sequenceDurationFrames }) => {
-  const frame = useCurrentFrame();
-  const isClipDone = frame >= clipDurationFrames;
-  const lastFrameTime = (clipDurationFrames - 1) / FPS;
-
-  return (
-    <AbsoluteFill style={{ background: T.parchment }}>
-      {!isClipDone ? (
-        <OffthreadVideo
-          src={staticFile(src)}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-          }}
-        />
-      ) : (
-        /* Freeze on the still — use the extracted last-frame PNG */
-        <Img
-          src={staticFile(src.replace(".mp4", "-last.png"))}
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
-        />
-      )}
-    </AbsoluteFill>
   );
 };
 

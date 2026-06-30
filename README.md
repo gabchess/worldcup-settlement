@@ -1,6 +1,6 @@
-# worldcup-settlement
+# World Cup TxODDS
 
-An autonomous AI agent that trades a live World Cup match on Solana, settling on-chain using TxODDS oracle data.
+An autonomous AI agent that bets on a live World Cup match on Solana, settling on-chain using TxODDS oracle data.
 
 **Trading Tools and Agents** | TxODDS x Solana World Cup Hackathon
 
