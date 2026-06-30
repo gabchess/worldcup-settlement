@@ -6,226 +6,335 @@
 
 /* ─── OKLCH Design Tokens ─────────────────────────────────────────────────── */
 :root {
-  /* Surfaces — 4-level elevation, dark-mode only */
-  --surface-base:    oklch(12% 0.015 250);   /* page background */
-  --surface-raised:  oklch(16% 0.015 250);   /* cards, panels */
-  --surface-overlay: oklch(20% 0.020 250);   /* nested / hover fill */
-  --surface-float:   oklch(25% 0.025 250);   /* tooltips, dropdowns */
-
-  /* Borders */
-  --border-subtle:   oklch(28% 0.020 250);
-  --border-default:  oklch(38% 0.025 250);
+  /* Surfaces */
+  --parchment:       oklch(0.942 0.012 79.8);   /* #f0ebe3 page background */
+  --ivory:           oklch(0.977 0.01 87.5);    /* #faf7f0 panels + pills */
+  --white:           oklch(1 0 0);              /* hero card surface */
 
   /* Text */
-  --text-primary:    oklch(92% 0.005 250);
-  --text-secondary:  oklch(60% 0.010 250);
-  --text-muted:      oklch(48% 0.010 250);
+  --ink:             oklch(0.283 0.007 67.5);   /* #2c2926 primary text + hero probability */
+  --ink-prose:       oklch(0.452 0.011 100);    /* #57564f body-sized muted prose (APCA-safe) */
+  --ink-muted:       oklch(0.619 0.01 100.1);   /* #87867f SMALL labels / pills / captions only */
+  --border:          oklch(0.89 0.016 82.8);    /* #e0dacf hairline */
 
-  /* Accent */
-  --accent:          oklch(68% 0.16 250);
-  --accent-subtle:   oklch(22% 0.06 250);
+  /* Accents */
+  --terracotta:      oklch(0.617 0.138 39);     /* #c96442 hero Net P&L value ONLY */
+  --terracotta-deep: oklch(0.471 0.11 49.3);    /* #8b4518 loss state */
+  --sage:            oklch(0.527 0.04 152.5);   /* #5a7260 gain state + live-badge text */
+  --sage-soft-bg:    oklch(0.933 0.01 155.1);   /* #e4ebe6 live-badge background */
+  --fresco-ochre:    oklch(0.738 0.075 78.6);   /* #c4a574 diamond dividers + trace left-border */
+  --fresco-red:      oklch(0.533 0.118 21.9);   /* #a64d4d reserved */
+  --aegean:          oklch(0.861 0.02 230.7);   /* #c5d4dc reserved */
 
-  /* P&L semantic — OKLCH calibrated for dark bg contrast */
-  --color-gain:         oklch(70% 0.18 150);
-  --color-gain-subtle:  oklch(24% 0.07 150);
-  --color-gain-muted:   oklch(55% 0.12 150);
-  --color-loss:         oklch(65% 0.22 25);
-  --color-loss-subtle:  oklch(24% 0.09 25);
-  --color-loss-muted:   oklch(52% 0.16 25);
-  --color-neutral:      oklch(55% 0.006 250);
+  /* Fonts */
+  --font-display: var(--font-cinzel), Georgia, "Times New Roman", serif;
+  --font-body:    var(--font-geist-sans), -apple-system, system-ui, sans-serif;
+  --font-mono:    var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
 
-  /* Semantic risk */
-  --color-warn:    oklch(72% 0.18 80);
-
-  /* Badge */
-  --badge-bg: oklch(20% 0.015 250);
-
-  /* Spacing scale (4px base) */
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-  --sp-5: 20px;
-  --sp-6: 24px;
-  --sp-8: 32px;
-  --sp-10: 40px;
-
-  /* Radius */
-  --radius-card:   12px;
-  --radius-badge:  8px;
-  --radius-btn:    6px;
-  --radius-inner:  6px;
+  /* Spacing scale (4pt base) */
+  --xs: 4px;
+  --sm: 8px;
+  --md: 16px;
+  --lg: 24px;
+  --xl: 40px;
+  --gap-section: 40px;
+  --pad-card: 28px;
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
 html, body {
-  background: var(--surface-base);
-  color: var(--text-primary);
-  /* Fix: removed trailing monospace fallback — prose was rendering in code font */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 14px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
   line-height: 1.6;
   min-height: 100vh;
+  font-kerning: normal;
+}
+
+h1 {
+  font-family: var(--font-display);
 }
 
 a {
-  color: var(--accent);
+  color: var(--ink);
   text-decoration: none;
 }
 a:hover {
   text-decoration: underline;
 }
 
-/* ─── Tabular numerics ────────────────────────────────────────────────────── */
-.tabular {
+/* ─── Number rule — every digit lives here ────────────────────────────────── */
+.num {
+  font-family: var(--font-body);     /* Geist, never Cinzel */
+  font-weight: 600;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
+/* ─── Mono utility ────────────────────────────────────────────────────────── */
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ─── Container ───────────────────────────────────────────────────────────── */
+.container {
+  max-width: 896px;
+  margin-inline: auto;
+  padding-inline: 20px;
+  padding-block: 40px;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-inline: 32px;
+  }
+}
+
 /* ─── Header ──────────────────────────────────────────────────────────────── */
-.header {
-  border-bottom: 1px solid var(--border-subtle);
-  padding: var(--sp-4) var(--sp-6);
+.page-header {
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
+  gap: var(--md);
+  flex-wrap: wrap;
+  margin-bottom: 12px; /* tight — meander hugs the header */
+}
+
+.page-header h1 {
+  font-size: clamp(1.75rem, 1.5rem + 1vw, 2rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sm);
+  margin-left: auto;
   flex-wrap: wrap;
 }
 
-.header h1 {
-  /* Fix: real page title — size + weight distinguish from panel titles */
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-}
-
-.header-meta {
-  display: flex;
+/* ─── Live badge ──────────────────────────────────────────────────────────── */
+.badge-live {
+  display: inline-flex;
   align-items: center;
-  gap: var(--sp-3);
-  margin-left: auto;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--sage-soft-bg);
+  border: 1px solid oklch(0.527 0.04 152.5 / 0.22);
+  color: var(--sage);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.header .program-id {
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Fira Code", monospace;
-  font-size: 12px;
-  color: var(--text-muted);
+.pulse-wrap {
+  position: relative;
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
 }
 
-.updated-at {
-  font-size: 11px;
-  color: var(--text-muted);
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--sage);
+  opacity: 0.6;
+  animation: pulse-ring 2.5s ease-out infinite;
 }
 
-/* ─── Badges ──────────────────────────────────────────────────────────────── */
-.badge {
-  display: inline-block;
-  padding: 2px var(--sp-2);
-  border-radius: var(--radius-badge);
-  font-size: 11px;
-  font-weight: 500;
-  background: var(--badge-bg);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
+.pulse-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sage);
 }
 
-.badge-devnet {
-  background: var(--accent-subtle);
-  border-color: var(--accent);
-  color: var(--accent);
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  70%  { transform: scale(2.2); opacity: 0;   }
+  100% { transform: scale(2.2); opacity: 0;   }
 }
 
-/* ─── Layout ──────────────────────────────────────────────────────────────── */
-.main {
-  padding: var(--sp-6);
+/* ─── Devnet pill ─────────────────────────────────────────────────────────── */
+.pill-devnet {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: var(--ivory);
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  cursor: default;
+}
+
+/* ─── Program ID link ─────────────────────────────────────────────────────── */
+.program-id-link {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+}
+
+/* ─── Meander strip ───────────────────────────────────────────────────────── */
+.meander-strip {
+  width: 100%;
+  height: 8px;
+  display: block;
+  margin-bottom: var(--xl); /* meander → hero: 40px */
+  overflow: hidden;
+}
+
+/* ─── 3-up hero card ──────────────────────────────────────────────────────── */
+.hero-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 3px oklch(0.283 0.007 67.5 / 0.06),
+    0 8px 24px oklch(0.283 0.007 67.5 / 0.05),
+    inset 0 1px 0 oklch(1 0 0);
+  padding: var(--pad-card) var(--lg);
+  margin-bottom: var(--md); /* hero → pills: 16px */
+}
+
+.hero-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-  max-width: 1200px;
-  /* Fix: center on wide screens */
-  margin: 0 auto;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: start;
 }
 
-/* Panel 4 (reasoning trace) gets more vertical space */
-.main > section:last-child {
-  grid-column: 1 / -1;
+.hero-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+  padding: var(--sm) var(--lg);
+  position: relative;
 }
 
-@media (max-width: 768px) {
-  .main {
+/* Diamond divider: all columns except last */
+.hero-col:not(:last-child)::after {
+  content: '◆';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px;
+  color: oklch(0.738 0.075 78.6 / 0.45);
+  line-height: 1;
+}
+
+.hero-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.hero-number-primary {
+  font-size: clamp(2.25rem, 1.9rem + 1.8vw, 3rem);
+  line-height: 1;
+  color: var(--terracotta);
+}
+
+.hero-number-secondary {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.hero-number-secondary.gain {
+  color: var(--sage);
+}
+
+.hero-pp {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--ink-muted);
+  letter-spacing: 0;
+}
+
+/* Responsive: stack hero columns under 640px */
+@media (max-width: 639px) {
+  .hero-grid {
     grid-template-columns: 1fr;
   }
-  .main > section:last-child {
-    grid-column: auto;
+
+  .hero-col:not(:last-child)::after {
+    display: none;
+  }
+
+  .hero-col:not(:first-child) {
+    border-top: 1px solid var(--border);
+    padding-top: var(--md);
+  }
+
+  .hero-number-primary {
+    font-size: clamp(2.25rem, 8vw, 3rem);
   }
 }
 
-/* ─── Panels ──────────────────────────────────────────────────────────────── */
-.panel {
-  background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
-  padding: var(--sp-5);
-  transition: box-shadow 150ms ease;
+/* ─── Pill chip row ───────────────────────────────────────────────────────── */
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sm);
+  margin-bottom: var(--gap-section); /* pills → positions: 40px */
 }
 
-.panel:hover {
-  box-shadow: 0 0 0 1px var(--border-default);
+.pill-chip {
+  padding: 8px 20px;
+  border-radius: 9999px;
+  background: var(--ivory);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  font-weight: 500;
+  cursor: default;
+}
+
+/* ─── Greek panels (positions + reasoning) ────────────────────────────────── */
+.card-panel-greek {
+  background: var(--ivory);
+  border-radius: 12px;
+  padding: var(--lg);
+  position: relative;
+  margin-bottom: var(--lg); /* between panels: 24px */
+}
+
+/* Inset classical frame */
+.card-panel-greek::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid oklch(0.738 0.075 78.6 / 0.25);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .panel-title {
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  margin-bottom: var(--sp-3);
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-bottom: var(--sm);
 }
 
-/* ─── Field rows ──────────────────────────────────────────────────────────── */
-.field-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--sp-2) 0;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.field-row:last-child {
-  border-bottom: none;
-}
-
-.field-label {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.field-value {
-  font-weight: 500;
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Fira Code", monospace;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ─── Action badges ───────────────────────────────────────────────────────── */
-.action-badge {
-  padding: 2px var(--sp-3);
-  border-radius: var(--radius-btn);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.action-hold     { background: var(--color-gain-subtle);   color: var(--color-gain);   }
-.action-increase { background: var(--accent-subtle);       color: var(--accent);       }
-.action-decrease { background: var(--color-loss-subtle);   color: var(--color-loss);   }
-
-/* ─── Position rows ───────────────────────────────────────────────────────── */
+/* ─── Positions panel rows ────────────────────────────────────────────────── */
 .position-row {
-  padding: var(--sp-2) 0;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--sm) 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .position-row:last-of-type {
@@ -236,110 +345,103 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--sp-1);
+  margin-bottom: 4px;
 }
 
-.fixture-id {
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Fira Code", monospace;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* ─── P&L colors ──────────────────────────────────────────────────────────── */
-.pnl-positive { color: var(--color-gain); }
-.pnl-negative { color: var(--color-loss); }
-
-/* ─── P&L bar (CSS-only, width set via inline style) ─────────────────────── */
-.pnl-bar-wrap {
-  margin-top: var(--sp-1);
-  height: 3px;
-  background: var(--surface-overlay);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.pnl-bar {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 400ms ease;
-}
-
-.pnl-bar.positive { background: var(--color-gain); }
-.pnl-bar.negative { background: var(--color-loss); }
-
-/* ─── P&L total row ───────────────────────────────────────────────────────── */
-.pnl-total {
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--border-subtle);
+.field-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.pnl-disclaimer {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: var(--sp-2);
-  font-style: italic;
+.field-row:last-child {
+  border-bottom: none;
+}
+
+.field-label {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+}
+
+.field-value {
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 /* ─── Reasoning trace panel ───────────────────────────────────────────────── */
-.trace-hero {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin-bottom: var(--sp-4);
-}
-
-.trace-hero-stat {
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--color-gain);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+.trace-prob {
+  font-size: clamp(2.5rem, 2.2rem + 1.5vw, 3rem);
   line-height: 1;
+  color: var(--ink);
+  margin-bottom: var(--sm);
 }
 
-.trace-hero-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
+.trace-prob-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-bottom: var(--md);
 }
 
-.trace-text {
-  font-size: 13px;
-  color: var(--text-primary);
-  line-height: 1.7;
-  margin-bottom: var(--sp-3);
+.trace-prose {
+  font-size: 1rem;
+  color: var(--ink-prose);
+  line-height: 1.75;
+  max-width: 68ch;
+  text-wrap: pretty;
+  margin-bottom: var(--md);
 }
 
 .trace-assessment {
-  font-size: 12px;
-  color: var(--text-secondary);
-  padding: var(--sp-3);
-  background: var(--surface-base);
-  border-radius: var(--radius-inner);
-  border-left: 3px solid var(--border-default);
-  line-height: 1.6;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-prose);
+  padding: var(--sm) var(--md);
+  background: var(--parchment);
+  border-left: 4px solid var(--fresco-ochre);
+  border-radius: 0 4px 4px 0;
+  line-height: 1.5;
+  margin-bottom: var(--sm);
+  overflow-wrap: anywhere;
 }
 
 /* ─── Tx hash links ───────────────────────────────────────────────────────── */
 .tx-hash {
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Fira Code", monospace;
-  font-size: 11px;
-  color: var(--accent);
-  letter-spacing: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
 }
 
 .tx-hash:hover {
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
-/* ─── Relative time ───────────────────────────────────────────────────────── */
-.relative-time {
-  font-size: 11px;
-  color: var(--text-muted);
+/* ─── Badge: side ─────────────────────────────────────────────────────────── */
+.badge-side {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--ivory);
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+}
+
+/* ─── P&L disclaimer ──────────────────────────────────────────────────────── */
+.pnl-disclaimer {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  margin-top: var(--sm);
+  font-style: italic;
 }
 
 /* ─── Empty states ────────────────────────────────────────────────────────── */
@@ -348,70 +450,9 @@ a:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-10) var(--sp-6);
-  gap: var(--sp-2);
+  padding: var(--xl) var(--lg);
+  gap: var(--sm);
   text-align: center;
-}
-
-.empty-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--sp-1);
-  color: var(--text-muted);
-  font-size: 18px;
-}
-
-.empty-headline {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.empty-sub {
-  font-size: 12px;
-  color: var(--text-muted);
-  max-width: 220px;
-}
-
-/* Legacy .empty kept for graceful fallback */
-.empty {
-  color: var(--text-muted);
-  font-size: 13px;
-  font-style: italic;
-}
-
-/* ─── Pulse indicator ─────────────────────────────────────────────────────── */
-.pulse-wrap {
-  position: relative;
-  display: inline-flex;
-  width: 8px;
-  height: 8px;
-}
-
-.pulse-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--color-gain);
-  opacity: 0.6;
-  animation: pulse-ring 1.8s ease-out infinite;
-}
-
-.pulse-dot {
-  position: relative;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-gain);
-}
-
-@keyframes pulse-ring {
-  0%   { transform: scale(1);   opacity: 0.6; }
-  70%  { transform: scale(2.2); opacity: 0;   }
-  100% { transform: scale(2.2); opacity: 0;   }
+  color: var(--ink-muted);
+  font-size: 0.875rem;
 }

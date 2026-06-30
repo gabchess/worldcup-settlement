@@ -66,3 +66,13 @@ export const totalPnl: number = positionsWithPnl.reduce(
   (sum, t) => sum + t.pnl,
   0
 );
+
+// Model edge: model probability minus implied market probability, in percentage points.
+// Uses the latest trace that has a non-null entryOdds.
+// ponytail: null when no trace has entryOdds; caller guards display; ceiling: single-trace PoC
+const headlineTrace = sorted.find((t) => t.position.entryOdds != null);
+export const modelEdge: number | null = headlineTrace
+  ? (headlineTrace.modelProbability -
+      1 / toDecimalOdds(headlineTrace.position.entryOdds!)) *
+    100
+  : null;

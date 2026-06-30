@@ -4,6 +4,7 @@ import {
   totalPnl,
   openPositions,
   toDecimalOdds,
+  modelEdge,
 } from "@/lib/traces";
 
 const PROGRAM_ID = "FFnQCXKLVLgA4Wn6PjH9mitKpHFqFtKz9HcF6qFRWnmp";
@@ -26,16 +27,6 @@ function formatSol(lamports: number): string {
   return (lamports / 1_000_000_000).toFixed(4) + " SOL";
 }
 
-function pnlClass(value: number): string {
-  return value >= 0 ? "pnl-positive" : "pnl-negative";
-}
-
-function actionClass(action: string): string {
-  if (action === "increase") return "action-badge action-increase";
-  if (action === "decrease") return "action-badge action-decrease";
-  return "action-badge action-hold";
-}
-
 /** Extract a Solana tx hash from the assessment string if present. */
 function extractTxHash(assessment: string): string | null {
   const match = assessment.match(/tx=([A-Za-z0-9]{43,88})/);
@@ -48,244 +39,205 @@ function truncateMiddle(s: string, chars = 8): string {
   return `${s.slice(0, chars)}…${s.slice(-chars)}`;
 }
 
-// Max absolute pnl across all positions — used to scale the bar widths.
-const maxAbsPnl = positionsWithPnl.reduce(
-  (m, t) => Math.max(m, Math.abs(t.pnl)),
-  1 // floor at 1 to avoid division by zero
-);
+// Meander SVG — 8px tall Greek-key, stroke ink-muted @35%, repeat-x
+function MeanderSvg() {
+  return (
+    <svg
+      className="meander-strip"
+      xmlns="http://www.w3.org/2000/svg"
+      height="8"
+      preserveAspectRatio="xMidYMid repeat"
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern
+          id="meander"
+          x="0"
+          y="0"
+          width="20"
+          height="8"
+          patternUnits="userSpaceOnUse"
+        >
+          {/* Simple step meander: L-shapes forming a continuous key border */}
+          <path
+            d="M0 7 L0 1 L6 1 L6 4 L3 4 L3 7 L13 7 L13 4 L10 4 L10 1 L20 1"
+            fill="none"
+            stroke="oklch(0.619 0.01 100.1 / 0.35)"
+            strokeWidth="1"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="8" fill="url(#meander)" />
+    </svg>
+  );
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Page() {
   const updatedAt = latestTrace ? relativeTime(latestTrace.timestamp) : null;
+  const atRisk = openPositions.reduce((s, t) => s + t.position.stake, 0);
+  const txHash = latestTrace ? extractTxHash(latestTrace.assessment) : null;
+
+  // Model edge display
+  const edgeDisplay =
+    modelEdge != null
+      ? `${modelEdge >= 0 ? "+" : ""}${modelEdge.toFixed(2)} pp`
+      : "—";
+  const edgePositive = modelEdge != null && modelEdge >= 0;
 
   return (
-    <>
-      <header className="header">
-        <span className="pulse-wrap" aria-label="Agent active">
-          <span className="pulse-ring" />
-          <span className="pulse-dot" />
-        </span>
-        <h1>World Cup Settlement</h1>
-
-        <div className="header-meta">
-          {updatedAt && <span className="updated-at">Updated {updatedAt}</span>}
+    <div className="container">
+      {/* Header */}
+      <header className="page-header">
+        <h1>World Cup TxODDS</h1>
+        <div className="header-right">
+          <span className="badge-live" aria-label="Agent active">
+            <span className="pulse-wrap" aria-hidden="true">
+              <span className="pulse-ring" />
+              <span className="pulse-dot" />
+            </span>
+            Live
+          </span>
           <a
             href={EXPLORER_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="program-id"
-            title="View program on Solana Explorer"
+            className="program-id-link mono"
+            title={PROGRAM_ID}
           >
-            {PROGRAM_ID.slice(0, 8)}…{PROGRAM_ID.slice(-8)}
+            {truncateMiddle(PROGRAM_ID)}
           </a>
-          <span className="badge badge-devnet">devnet</span>
+          <span className="pill-devnet">devnet</span>
         </div>
       </header>
 
-      <main className="main">
-        {/* Panel 1: Last agent action */}
-        <section className="panel" aria-label="Last agent action">
-          <p className="panel-title">Last agent action</p>
-          {latestTrace ? (
-            <>
+      {/* Meander strip */}
+      <MeanderSvg />
+
+      {/* 3-up hero card */}
+      <div className="hero-card">
+        <div className="hero-grid">
+          {/* Col 1: Net P&L — primary */}
+          <div className="hero-col">
+            <span className="hero-label">Net P&amp;L</span>
+            <span className={`num hero-number-primary`}>
+              {totalPnl >= 0 ? "+" : ""}
+              <span className="num">{formatSol(totalPnl)}</span>
+            </span>
+          </div>
+
+          {/* Col 2: Open Positions — secondary */}
+          <div className="hero-col">
+            <span className="hero-label">Open Positions</span>
+            <span className="num hero-number-secondary">
+              {openPositions.length}
+            </span>
+          </div>
+
+          {/* Col 3: Model Edge — secondary */}
+          <div className="hero-col">
+            <span className="hero-label">Model Edge</span>
+            <span
+              className={`num hero-number-secondary${
+                edgePositive ? " gain" : ""
+              }`}
+            >
+              {edgeDisplay}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pill chip row */}
+      <div className="pill-row" role="list" aria-label="Status pills">
+        <span className="pill-chip" role="listitem">
+          <span className="num">{openPositions.length}</span> open
+        </span>
+        <span className="pill-chip" role="listitem">
+          <span className="num">{formatSol(atRisk)}</span> at risk
+        </span>
+        <span className="pill-chip" role="listitem">
+          devnet
+        </span>
+        {updatedAt && (
+          <span className="pill-chip" role="listitem">
+            Updated {updatedAt}
+          </span>
+        )}
+      </div>
+
+      {/* Positions panel */}
+      <section className="card-panel-greek" aria-label="Open positions">
+        <p className="panel-title">Open Positions</p>
+        {openPositions.length === 0 ? (
+          <div className="empty-state">No open positions yet.</div>
+        ) : (
+          openPositions.map((t) => (
+            <div key={t.fixtureId} className="position-row">
+              <div className="position-header">
+                <span className="field-label mono">
+                  Fixture #<span className="num">{t.fixtureId}</span>
+                </span>
+                <span className="badge-side">{t.position.side}</span>
+              </div>
               <div className="field-row">
-                <span className="field-label">Event</span>
-                <span className="field-value">
-                  {latestTrace.eventType.replaceAll("_", " ")}
+                <span className="field-label">Stake</span>
+                <span className="field-value num">
+                  {formatSol(t.position.stake)}
                 </span>
               </div>
               <div className="field-row">
-                <span className="field-label">Fixture</span>
-                <span className="field-value">#{latestTrace.fixtureId}</span>
-              </div>
-              <div className="field-row">
-                <span className="field-label">Action</span>
-                <span className={actionClass(latestTrace.suggestedAction)}>
-                  {latestTrace.suggestedAction}
+                <span className="field-label">Entry odds</span>
+                <span className="field-value num">
+                  {t.position.entryOdds != null
+                    ? toDecimalOdds(t.position.entryOdds).toFixed(2)
+                    : "—"}
                 </span>
               </div>
-              {(() => {
-                const tx = extractTxHash(latestTrace.assessment);
-                return tx ? (
-                  <div className="field-row">
-                    <span className="field-label">Tx</span>
-                    <a
-                      href={`https://explorer.solana.com/tx/${tx}?cluster=devnet`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="tx-hash"
-                      title={tx}
-                    >
-                      {truncateMiddle(tx)}
-                    </a>
-                  </div>
-                ) : null;
-              })()}
-              <div className="field-row">
-                <span className="field-label">When</span>
-                <span className="relative-time">
-                  {relativeTime(latestTrace.timestamp)}
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-icon">⊘</div>
-              <p className="empty-headline">No actions recorded</p>
-              <p className="empty-sub">
-                The agent hasn&apos;t acted yet this session.
-              </p>
             </div>
-          )}
-        </section>
+          ))
+        )}
+        {positionsWithPnl.length > 0 && (
+          <p className="pnl-disclaimer">
+            mark-to-model estimate (devnet PoC) — formula: stake &times;
+            (entryOdds &times; modelProbability &minus; 1)
+          </p>
+        )}
+      </section>
 
-        {/* Panel 2: Open positions */}
-        <section className="panel" aria-label="Open positions">
-          <p className="panel-title">Open positions</p>
-          {openPositions.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">◻</div>
-              <p className="empty-headline">No open positions</p>
-              <p className="empty-sub">
-                The agent has no active bets in this session.
-              </p>
+      {/* Reasoning-trace panel */}
+      <section className="card-panel-greek" aria-label="Latest reasoning trace">
+        <p className="panel-title">Latest Reasoning Trace</p>
+        {latestTrace ? (
+          <>
+            <p className="trace-prob num">
+              {(latestTrace.modelProbability * 100).toFixed(1)}%
+            </p>
+            <p className="trace-prob-label">model probability</p>
+            <p className="trace-prose">{latestTrace.reasoningTrace}</p>
+            <div className="trace-assessment mono">
+              {latestTrace.assessment}
             </div>
-          ) : (
-            openPositions.map((t) => (
-              <div key={t.fixtureId} className="position-row">
-                <div className="position-header">
-                  <span className="fixture-id">Fixture #{t.fixtureId}</span>
-                  <span className="badge">{t.position.side}</span>
-                </div>
-                <div className="field-row">
-                  <span className="field-label">Stake</span>
-                  <span className="field-value">
-                    {formatSol(t.position.stake)}
-                  </span>
-                </div>
-                <div className="field-row">
-                  <span className="field-label">Entry odds</span>
-                  <span className="field-value">
-                    {t.position.entryOdds != null
-                      ? toDecimalOdds(t.position.entryOdds).toFixed(2)
-                      : "—"}
-                  </span>
-                </div>
+            {txHash && (
+              <div className="field-row" style={{ marginTop: "12px" }}>
+                <span className="field-label">Tx on-chain</span>
+                <a
+                  href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tx-hash mono"
+                  title={txHash}
+                >
+                  {truncateMiddle(txHash)}
+                </a>
               </div>
-            ))
-          )}
-        </section>
-
-        {/* Panel 3: Live P&L */}
-        <section className="panel" aria-label="Live P&L">
-          <p className="panel-title">Live P&amp;L</p>
-          {positionsWithPnl.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">◻</div>
-              <p className="empty-headline">No positions to value</p>
-              <p className="empty-sub">
-                Open positions will appear here once bets are placed.
-              </p>
-            </div>
-          ) : (
-            <>
-              {positionsWithPnl.map((t) => {
-                const barWidth = Math.round(
-                  (Math.abs(t.pnl) / maxAbsPnl) * 100
-                );
-                return (
-                  <div
-                    key={t.fixtureId}
-                    className="field-row"
-                    style={{ display: "block", padding: "8px 0" }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span className="field-label">
-                        #{t.fixtureId} {t.position.side}
-                      </span>
-                      <span className={`field-value ${pnlClass(t.pnl)}`}>
-                        {t.pnl >= 0 ? "+" : ""}
-                        {formatSol(t.pnl)}
-                      </span>
-                    </div>
-                    <div className="pnl-bar-wrap">
-                      <div
-                        className={`pnl-bar ${
-                          t.pnl >= 0 ? "positive" : "negative"
-                        }`}
-                        style={{ width: `${barWidth}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="pnl-total">
-                <span className="field-label">Net total</span>
-                <span className={`field-value ${pnlClass(totalPnl)}`}>
-                  {totalPnl >= 0 ? "+" : ""}
-                  {formatSol(totalPnl)}
-                </span>
-              </div>
-              <p className="pnl-disclaimer">
-                mark-to-model estimate (devnet PoC) — formula: stake &times;
-                (entryOdds &times; modelProbability &minus; 1)
-              </p>
-            </>
-          )}
-        </section>
-
-        {/* Panel 4: Latest reasoning trace — spans full width */}
-        <section className="panel" aria-label="Latest reasoning trace">
-          <p className="panel-title">Latest reasoning trace</p>
-          {latestTrace ? (
-            <>
-              {/* Hero stat: model probability */}
-              <div className="trace-hero">
-                <span className="trace-hero-stat">
-                  {(latestTrace.modelProbability * 100).toFixed(1)}%
-                </span>
-                <span className="trace-hero-label">model probability</span>
-              </div>
-
-              <p className="trace-text">{latestTrace.reasoningTrace}</p>
-              <div className="trace-assessment">{latestTrace.assessment}</div>
-
-              {(() => {
-                const tx = extractTxHash(latestTrace.assessment);
-                return tx ? (
-                  <div className="field-row" style={{ marginTop: "12px" }}>
-                    <span className="field-label">Tx on-chain</span>
-                    <a
-                      href={`https://explorer.solana.com/tx/${tx}?cluster=devnet`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="tx-hash"
-                      title={tx}
-                    >
-                      {truncateMiddle(tx)}
-                    </a>
-                  </div>
-                ) : null;
-              })()}
-            </>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-icon">⊘</div>
-              <p className="empty-headline">No traces recorded</p>
-              <p className="empty-sub">
-                Reasoning traces from the agent will appear here.
-              </p>
-            </div>
-          )}
-        </section>
-      </main>
-    </>
+            )}
+          </>
+        ) : (
+          <div className="empty-state">No traces recorded yet.</div>
+        )}
+      </section>
+    </div>
   );
 }

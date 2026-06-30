@@ -28,5 +28,20 @@
     "suggestedAction": "hold",
     "reasoningTrace": "Market implies 5.4% but model estimates 33.6%, so the entry odds of 186.0 overcompensate relative to fair value (fair price ~2.98). Expected value is strongly positive: 0.336 stake-weighted payoff at 186.0 dwarfs the implied breakeven. The edge is unusually large, suggesting either genuine mispricing or model overconfidence on a deep longshot, so I avoid increasing into a potentially fragile estimate. Holding captures the existing favorable EV while limiting added risk on an extreme outlier line.",
     "impl": "real"
+  },
+  {
+    "timestamp": "2026-06-29T17:05:47.887Z",
+    "fixtureId": 18172469,
+    "eventType": "edge",
+    "modelProbability": 0.41900726446295455,
+    "position": {
+      "side": "home",
+      "stake": 6250000,
+      "entryOdds": 2720
+    },
+    "assessment": "Bet placed. stake=6250000 lamports, tx=2W6BCRspX12je2MXbvfqWnnGUFbkc7huPpZCegVUmAZFAekBdWGxvv5vJt1dFVQvyXJWSsVHx4KP6fGvar86Rz4f",
+    "suggestedAction": "hold",
+    "reasoningTrace": "Fair odds at 41.9% model probability imply a price of ~2.39, yet we hold at 2.72, so the line favors us. Expected value per unit is positive: 0.419 * 1.72 - 0.581 = ~0.139, roughly +13.9% edge on stake. Since the position already captures this gap and no event has invalidated the model view, adding risk is unnecessary and exiting forfeits value. Hold to let the established edge play out.",
+    "impl": "real"
   }
 ]
