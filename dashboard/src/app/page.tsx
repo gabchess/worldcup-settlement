@@ -208,7 +208,7 @@ export default function Page() {
         )}
         {positionsWithPnl.length > 0 && (
           <p className="pnl-disclaimer">
-            mark-to-model estimate (devnet PoC) — formula: stake &times;
+            mark-to-model estimate (devnet PoC). Formula: stake &times;
             (entryOdds &times; modelProbability &minus; 1)
           </p>
         )}
