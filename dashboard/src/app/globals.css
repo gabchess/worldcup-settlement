@@ -63,6 +63,11 @@ a {
 a:hover {
   text-decoration: underline;
 }
+a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 
 /* ─── Number rule — every digit lives here ────────────────────────────────── */
 .num {
@@ -118,8 +123,13 @@ a:hover {
   flex-wrap: wrap;
 }
 
-/* ─── Live badge ──────────────────────────────────────────────────────────── */
-.badge-live {
+/* ─── Status badge ────────────────────────────────────────────────────────── */
+/* Honesty fix: this was "Live" with a pulsing ring, implying a real-time feed.
+   The data is a static devnet snapshot, so the badge states that plainly —
+   sage/soft-bg is calm-neutral, not an alarm color, and the dot no longer
+   animates (a still dot reads as "recorded," a pulsing one reads as "happening
+   now"). Same APCA-verified token pair as before (Lc 63.1, Phase 1c). */
+.badge-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -134,7 +144,7 @@ a:hover {
   text-transform: uppercase;
 }
 
-.pulse-wrap {
+.status-dot-wrap {
   position: relative;
   display: inline-flex;
   width: 8px;
@@ -142,27 +152,12 @@ a:hover {
   flex-shrink: 0;
 }
 
-.pulse-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--sage);
-  opacity: 0.6;
-  animation: pulse-ring 2.5s ease-out infinite;
-}
-
-.pulse-dot {
+.status-dot {
   position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--sage);
-}
-
-@keyframes pulse-ring {
-  0%   { transform: scale(1);   opacity: 0.6; }
-  70%  { transform: scale(2.2); opacity: 0;   }
-  100% { transform: scale(2.2); opacity: 0;   }
 }
 
 /* ─── Devnet pill ─────────────────────────────────────────────────────────── */
@@ -182,6 +177,10 @@ a:hover {
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   color: var(--ink-muted);
+  transition: color 150ms ease-out;
+}
+.program-id-link:hover {
+  color: var(--ink);
 }
 
 /* ─── Meander strip ───────────────────────────────────────────────────────── */
@@ -367,7 +366,15 @@ a:hover {
 
 .field-value {
   font-weight: 600;
-  font-family: var(--font-mono);
+  /* DESIGN.md's "number rule": every digit is Geist, never mono (Cinzel is
+     banned from digits, and mono is reserved for hashes / program ID /
+     assessment strings). This class previously set font-family to
+     var(--font-mono), which — because it's declared after .num in source
+     order — silently won the cascade over the .num class already on these
+     spans in page.tsx and rendered Stake/Entry-odds in Geist Mono instead of
+     Geist. Declaring the body font explicitly here fixes the hierarchy and
+     stops relying on cascade order to get it right. */
+  font-family: var(--font-body);
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -417,6 +424,7 @@ a:hover {
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   color: var(--ink-muted);
+  transition: color 150ms ease-out;
 }
 
 .tx-hash:hover {

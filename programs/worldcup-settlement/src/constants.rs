@@ -23,11 +23,9 @@ pub const USE_PLAN_B: bool = true;
 // AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9
 // See tests/settlement.rs TEST_ORACLE_SECRET for the matching secret bytes.
 #[cfg(feature = "test-oracle")]
-pub const PLAN_B_ORACLE_AUTHORITY: Pubkey =
-    pubkey!("AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9");
+pub const PLAN_B_ORACLE_AUTHORITY: Pubkey = pubkey!("AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9");
 
 // Devnet burner wallet (we control it; the secret key lives in the deployer's keystore,
 // never in this repo).
 #[cfg(not(feature = "test-oracle"))]
-pub const PLAN_B_ORACLE_AUTHORITY: Pubkey =
-    pubkey!("8gbaJEfM5VDs9BpFLgwMTq7s2FkVpEri8ZnPbxn4HPqY");
+pub const PLAN_B_ORACLE_AUTHORITY: Pubkey = pubkey!("8gbaJEfM5VDs9BpFLgwMTq7s2FkVpEri8ZnPbxn4HPqY");

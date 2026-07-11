@@ -33,4 +33,32 @@ pub enum WorldCupError {
     // Root account owner guard (council 4a — PDA squatting defense)
     #[msg("daily_batch_roots_pda is not owned by the TxODDS program")]
     InvalidRootAccountOwner,
+
+    // claim_payout guards (C9, ported from pari-market's ClaimPayout constraints)
+    #[msg("Market has not been resolved yet")]
+    MarketNotResolved,
+
+    #[msg("Position has already been claimed")]
+    AlreadyClaimed,
+
+    #[msg("Position is on the losing side")]
+    LosingPosition,
+
+    // Rent-exemption guard (Implementation Decision #3) -- distinct from
+    // ArithmeticOverflow: this failure is "payout would drain the vault
+    // below its own rent-exempt minimum," not an overflow.
+    #[msg("Payout would drain the vault below its rent-exempt minimum")]
+    VaultBelowRentExemption,
+
+    // Betting-lock guards (PRD S193 Amendment 1, ticket T1c)
+    #[msg("Betting is closed: the market's lock_ts has been reached")]
+    BettingClosed,
+
+    #[msg("Market cannot be settled before its lock_ts has elapsed")]
+    MarketNotYetLocked,
+
+    // Guards the lock_ts u64->i64 cast: a value above i64::MAX would wrap
+    // negative and silently defeat the betting-lock guards (Kent review, S193).
+    #[msg("lock_ts exceeds the maximum valid unix timestamp (i64::MAX)")]
+    InvalidLockTs,
 }

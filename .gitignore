@@ -14,3 +14,9 @@ dashboard/.claude/
 video/public/
 video/node_modules/
 video/out/
+.wallets/
+docs/FORM-ANSWERS.md
+video/footage/
+video/raw/
+docs/m6-video/
+*.tsbuildinfo

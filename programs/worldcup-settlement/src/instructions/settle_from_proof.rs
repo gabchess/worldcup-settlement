@@ -1,8 +1,8 @@
-use anchor_lang::prelude::*;
 use crate::constants::{MARKET_SEED, TXODDS_PROGRAM_ID, USE_PLAN_B};
 use crate::errors::WorldCupError;
 use crate::market::Market;
-use crate::proof::{ProofNode, plan_b, verify};
+use crate::proof::{plan_b, verify, ProofNode};
+use anchor_lang::prelude::*;
 
 /// Verifies that stat_data is included in the TxODDS daily batch root via Merkle proof,
 /// then marks market.settled = true and records the outcome.
@@ -27,6 +27,15 @@ pub fn settle_from_proof(
     // The require here is a belt-and-suspenders for direct unit test paths that bypass
     // Anchor's constraint check (e.g. set_account pokes in tests).
     require!(!market.settled, WorldCupError::AlreadySettled);
+
+    // PRD S193 Amendment 1 / ticket T1c: settle-vs-lock ordering guard. A
+    // market can never be settled while the betting window is still
+    // nominally open (prevents the market authority from resolving before
+    // every intended bettor has had a fair window to stake).
+    require!(
+        Clock::get()?.unix_timestamp >= market.lock_ts as i64,
+        WorldCupError::MarketNotYetLocked
+    );
 
     if USE_PLAN_B {
         // PLAN-B: trusted-oracle settle. Admin key posts result.
@@ -67,7 +76,10 @@ pub fn settle_from_proof(
         // Encoding: bytes 0..8 = match_id as u64 LE. TODO(C6): confirm against live TxODDS.
         let decoded_match_id =
             verify::decode_match_id(&stat_data).ok_or(WorldCupError::ProofVerificationFailed)?;
-        require!(decoded_match_id == market.match_id, WorldCupError::MatchIdMismatch);
+        require!(
+            decoded_match_id == market.match_id,
+            WorldCupError::MatchIdMismatch
+        );
 
         // Decode outcome from stat_data.
         // Encoding: byte 8 = 0=Home, 1=Away, 2=Draw. TODO(C6): confirm against live TxODDS.

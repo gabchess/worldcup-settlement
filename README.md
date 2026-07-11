@@ -26,7 +26,7 @@ TxLINE (TxODDS oracle)  -->  Logistic model  -->  Opus 4.8 LLM  -->  autonomous 
 ```
 
 **Layer 1 -- Settlement contract** (`programs/worldcup-settlement`)
-Anchor/Rust program on Solana devnet. Three instructions: `init_market`, `open_position`, `settle_from_proof`. Verifies a Merkle proof against the TxODDS on-chain `daily_scores_roots` PDA. Includes a Plan-B trusted-oracle fallback (`USE_PLAN_B` flag). Security hardened: double-settle guard, match_id replay guard, checked arithmetic, settle authority, PDA owner-check.
+Anchor/Rust program on Solana devnet. Three instructions: `init_market`, `open_position`, `settle_from_proof`. Settles live via a trusted-oracle path (`USE_PLAN_B = true`): a designated oracle authority posts the match outcome directly, no Merkle proof required. A trustless Merkle verifier against the TxODDS on-chain `daily_scores_roots` PDA is implemented and unit-tested in `src/proof/verify.rs`, but is not the active path on the deployed program (see Honesty / Disclosures below). Security hardened: double-settle guard, match_id replay guard, checked arithmetic, settle authority, PDA owner-check.
 
 **Layer 2 -- Prediction model** (`model/`)
 Logistic regression with Platt calibration. Outputs P(home wins match) from 4 in-play features: score differential, match phase, red-card delta, and match-phase squared. Trained on StatsBomb Open Data (World Cup 2022 + Euro, 60 matches). Holdout Brier score: 0.158 vs 0.243 baseline (35% better).
@@ -68,7 +68,21 @@ Note: `leagues: []` is required. `leagues: ["world_cup"]` returns HTTP 500.
 
 ### Settlement proof
 
-Settlement reads the TxODDS `daily_scores_roots` PDA on Solana devnet. The program verifies a Merkle proof (`proof_nodes` + `stat_data`) against the stored root for the epoch day. `stat_data` encodes match_id (bytes 0-7, little-endian u64) and outcome byte (byte 8: 0=Home, 1=Away, 2=Draw).
+Two settlement paths exist. The deployed program runs Plan-B: a trusted oracle authority calls `settle_from_proof` with the match outcome directly, and the program checks the caller's signature against the configured oracle pubkey. No Merkle proof is read or verified on the live path.
+
+The Merkle path (`verify_proof_against_pda` in `src/proof/verify.rs`) reads the TxODDS `daily_scores_roots` PDA and verifies a Merkle proof (`proof_nodes` + `stat_data`) against the stored root for the epoch day, with `stat_data` encoding match_id (bytes 0-7, little-endian u64) and outcome byte (byte 8: 0=Home, 1=Away, 2=Draw). It is unit-tested but gated off (`USE_PLAN_B = true`) because the proof encoding against live TxODDS data was not confirmed in time.
+
+---
+
+## Honesty / Disclosures
+
+The deployed devnet program settles live via Plan-B: a trusted oracle authority posts the match outcome, and the program checks the caller's signature against a hardcoded pubkey. That is what actually runs when the autonomous loop settles a bet.
+
+The trustless path is real code, not a placeholder. `verify_merkle_proof` and `verify_proof_against_pda` in `src/proof/verify.rs` walk a Merkle proof against the TxODDS `daily_scores_roots` PDA and are covered by unit tests: valid proof, tampered node rejected, wrong leaf rejected, PDA owner-check. It is switched off on the deployed program (`USE_PLAN_B = true` in `src/constants.rs`) because the exact hash function and leaf encoding TxODDS uses in production were not confirmed against live data in time for the hackathon window (tracked as C6 in the code comments).
+
+Flip `USE_PLAN_B` to `false` once that encoding is confirmed and `settle_from_proof` runs trustlessly, no changes needed to the calling agent.
+
+All P&L shown on the dashboard is a mark-to-model estimate, not settled winnings: a devnet proof of concept, not a claim of realized returns.
 
 ---
 
@@ -91,7 +105,8 @@ The live dashboard (linked above) shows last agent action, open positions, live 
 ```
 programs/worldcup-settlement/   Anchor/Rust settlement contract
   src/                          Instructions, market, position, proof, constants
-  tests/settlement.rs           7 integration tests (litesvm, no validator)
+  tests/settlement.rs           11 integration tests (litesvm, no validator)
+  tests/claim_payout.rs         9 integration tests (litesvm, no validator)
 
 client/                         TxLINE TypeScript client
   txline-client.ts              Auth, fixtures, scores, odds, Merkle proof
@@ -133,7 +148,7 @@ anchor build
 cargo test
 ```
 
-14 tests (7 unit + 7 integration), all green, cover: market init, position opens, double-settle guard, match_id replay guard, settle authority, Merkle proof verification, and Plan-B oracle path.
+29 tests (8 lib unit + 9 claim_payout integration + 12 settlement integration), all green, cover: market init, lock_ts bounds validation, position opens, betting-lock timing guards, double-settle guard, match_id replay guard, settle authority, Merkle proof verification (valid proof, tampered node rejected, wrong leaf rejected, PDA owner-check), Plan-B oracle path, proportional payout math, conservation of funds, double-claim rejection, and empty-winning-pool refund.
 
 ### Prerequisites
 

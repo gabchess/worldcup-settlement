@@ -221,10 +221,15 @@ async function marketPdaExists(
 async function initMarket(
   program: anchor.Program,
   keypair: anchor.web3.Keypair,
-  matchId: anchor.BN
+  matchId: anchor.BN,
+  // T1c: lock_ts closes betting. Default 24h out — long enough to cover a
+  // full agent loop run, short enough that the lock still means something.
+  lockTs: anchor.BN = new anchor.BN(
+    Math.floor(Date.now() / 1000) + 24 * 60 * 60
+  )
 ): Promise<string> {
   const tx = await (program.methods as any)
-    .initMarket(matchId, EPOCH_DAY)
+    .initMarket(matchId, EPOCH_DAY, lockTs)
     .accounts({ authority: keypair.publicKey })
     .rpc();
   return tx;

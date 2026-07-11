@@ -12,14 +12,18 @@ const EXPLORER_URL = `https://explorer.solana.com/address/${PROGRAM_ID}?cluster=
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+// This page is statically generated at build time (Next.js prerenders "/" as
+// static content — confirmed via `next build`). A relative-time string like
+// "Updated 2h ago" would be computed once at build and never revisited, so it
+// silently goes stale the moment the deploy ages past minutes. An absolute
+// date is honest at any distance from build time — it says exactly what it
+// means and never quietly lies.
+function formatSnapshotDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function formatSol(lamports: number): string {
@@ -75,7 +79,9 @@ function MeanderSvg() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Page() {
-  const updatedAt = latestTrace ? relativeTime(latestTrace.timestamp) : null;
+  const snapshotDate = latestTrace
+    ? formatSnapshotDate(latestTrace.timestamp)
+    : null;
   const atRisk = openPositions.reduce((s, t) => s + t.position.stake, 0);
   const txHash = latestTrace ? extractTxHash(latestTrace.assessment) : null;
 
@@ -92,12 +98,14 @@ export default function Page() {
       <header className="page-header">
         <h1>World Cup TxODDS</h1>
         <div className="header-right">
-          <span className="badge-live" aria-label="Agent active">
-            <span className="pulse-wrap" aria-hidden="true">
-              <span className="pulse-ring" />
-              <span className="pulse-dot" />
+          <span
+            className="badge-status"
+            aria-label="Devnet snapshot. Recorded reasoning trace, not a live feed"
+          >
+            <span className="status-dot-wrap" aria-hidden="true">
+              <span className="status-dot" />
             </span>
-            Live
+            Snapshot
           </span>
           <a
             href={EXPLORER_URL}
@@ -160,9 +168,9 @@ export default function Page() {
         <span className="pill-chip" role="listitem">
           devnet
         </span>
-        {updatedAt && (
+        {snapshotDate && (
           <span className="pill-chip" role="listitem">
-            Updated {updatedAt}
+            Recorded {snapshotDate}
           </span>
         )}
       </div>

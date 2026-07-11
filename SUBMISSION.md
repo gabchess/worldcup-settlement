@@ -22,7 +22,7 @@ TxODDS x Solana World Cup Hackathon
 
 I built an autonomous AI agent that trades a live World Cup match on Solana from end to end: it subscribes to TxLINE for live fixture data, runs an in-play logistic model to produce a win probability, fires Claude Opus 4.8 on material events (goals, red cards) for a trade decision, and calls `open_position` on a deployed Anchor settlement contract.
 
-The settlement contract verifies match outcomes using a Merkle proof against the TxODDS on-chain `daily_scores_roots` PDA. A Plan-B trusted-oracle path is available for devnet testing when Merkle proofs are not yet committed.
+The deployed settlement contract settles live via a trusted-oracle path: an oracle authority posts the match outcome and the program checks its signature. A trustless Merkle-proof verifier against the TxODDS on-chain `daily_scores_roots` PDA is built and unit-tested, but it is not the path running on devnet right now (see Honesty / Disclosures below).
 
 The full pipeline -- oracle data in, on-chain position out -- runs autonomously with no human in the loop.
 
@@ -42,7 +42,7 @@ Live data consumed:
 - `/api/odds/snapshot?fixtureId=N` -- current market odds
 
 Settlement proof source:
-- TxODDS `daily_scores_roots` PDA on Solana devnet -- the contract Merkle-verifies the outcome against the stored daily root
+- TxODDS `daily_scores_roots` PDA on Solana devnet. The deployed contract does not read this PDA at settlement time; it runs the Plan-B trusted-oracle path instead. The Merkle verifier that would read this PDA is implemented and unit-tested but not wired into the live settlement call (see Honesty / Disclosures below).
 
 ---
 
@@ -69,7 +69,15 @@ The autonomous loop authenticated to TxLINE, read a live in-running match, found
 - Retrieved in-play score fields from the live feed: Goals, YellowCards, RedCards, Clock (minutes)
 - Retrieved odds with the InRunning flag set
 - Opened a real on-chain position from live in-running data (the open_position transaction above)
-- Confirmed the on-chain `daily_scores_roots` Merkle root for the current epoch on devnet, which is the settlement proof source
+- Confirmed the on-chain `daily_scores_roots` Merkle root exists for the current epoch on devnet -- the data the trustless Merkle path reads once wired in; live settlement runs Plan-B instead (see Honesty / Disclosures)
+
+---
+
+## Honesty / Disclosures
+
+The live settlement path on devnet is Plan-B: a trusted oracle authority posts the outcome and the contract checks its signature. The trustless Merkle verifier (`src/proof/verify.rs`, `verify_merkle_proof` / `verify_proof_against_pda`) is implemented and unit-tested against synthetic proofs, but it is gated off (`USE_PLAN_B = true`) because the proof encoding against live TxODDS data was not confirmed in time. Full detail in the README's Honesty / Disclosures section.
+
+All P&L shown on the dashboard is a mark-to-model estimate, not settled winnings: a devnet proof of concept, not a claim of realized returns.
 
 ---
 

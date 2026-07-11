@@ -36,8 +36,8 @@ fn main() {
     // Locate cargo-build-sbf.
     let sbf = which_cargo_build_sbf();
 
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR must be set by Cargo");
+    let manifest_dir =
+        std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set by Cargo");
 
     let status = Command::new(&sbf)
         .args(["--features", "test-oracle"])
@@ -46,7 +46,10 @@ fn main() {
         .unwrap_or_else(|e| panic!("failed to run {sbf}: {e}"));
 
     if !status.success() {
-        panic!("cargo-build-sbf --features test-oracle failed (exit {:?})", status.code());
+        panic!(
+            "cargo-build-sbf --features test-oracle failed (exit {:?})",
+            status.code()
+        );
     }
 }
 

@@ -1,8 +1,8 @@
-use anchor_lang::prelude::*;
 use crate::constants::PLAN_B_ORACLE_AUTHORITY;
 use crate::errors::WorldCupError;
 use crate::market::Market;
 use crate::proof::verify;
+use anchor_lang::prelude::*;
 
 /// PLAN-B: trusted-oracle settle. Admin key posts result.
 /// Not trustless. Replaces Model-2 until token/activate HTTP 500 is resolved.
@@ -13,11 +13,7 @@ use crate::proof::verify;
 ///
 /// TODO(C4): define and document the stat_data encoding contract
 /// TODO(C5): delete this file and route all settlement through verify::verify_proof_against_pda
-pub fn settle_plan_b(
-    market: &mut Market,
-    authority: &Signer,
-    stat_data: &[u8],
-) -> Result<()> {
+pub fn settle_plan_b(market: &mut Market, authority: &Signer, stat_data: &[u8]) -> Result<()> {
     // Authority guard: only the designated devnet oracle may call this path.
     require_keys_eq!(
         authority.key(),

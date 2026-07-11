@@ -1,5 +1,5 @@
-use anchor_lang::prelude::*;
 use crate::market::Side;
+use anchor_lang::prelude::*;
 
 /// On-chain record of a single bettor's position in a market.
 ///

@@ -1,8 +1,8 @@
-use anchor_lang::prelude::*;
-use sha2::{Digest, Sha256};
 use crate::constants::{DAILY_BATCH_ROOTS_SEED, TXODDS_PROGRAM_ID};
 use crate::errors::WorldCupError;
 use crate::market::Side;
+use anchor_lang::prelude::*;
+use sha2::{Digest, Sha256};
 
 /// A single node in a portable Merkle proof path.
 ///
@@ -20,10 +20,7 @@ pub struct ProofNode {
 ///
 /// seeds: [b"daily_batch_roots", epoch_day.to_le_bytes()]
 /// owner: TXODDS_PROGRAM_ID (from constants)
-pub fn derive_daily_batch_roots_pda(
-    epoch_day: u16,
-    txodds_program_id: &Pubkey,
-) -> (Pubkey, u8) {
+pub fn derive_daily_batch_roots_pda(epoch_day: u16, txodds_program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[DAILY_BATCH_ROOTS_SEED, &epoch_day.to_le_bytes()],
         txodds_program_id,
@@ -275,7 +272,11 @@ mod tests {
         let result = read_root_from_pda(&pda);
 
         assert!(result.is_ok(), "valid TxODDS-owned PDA must succeed");
-        assert_eq!(result.unwrap(), root_bytes, "returned root must match data[..32]");
+        assert_eq!(
+            result.unwrap(),
+            root_bytes,
+            "returned root must match data[..32]"
+        );
     }
 
     #[test]
@@ -292,8 +293,7 @@ mod tests {
         let result = read_root_from_pda(&pda);
 
         assert!(result.is_err(), "non-TxODDS-owned PDA must be rejected");
-        let expected_err: anchor_lang::error::Error =
-            WorldCupError::InvalidRootAccountOwner.into();
+        let expected_err: anchor_lang::error::Error = WorldCupError::InvalidRootAccountOwner.into();
         assert_eq!(
             result.unwrap_err(),
             expected_err,
